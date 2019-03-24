@@ -9,6 +9,14 @@ before:
 builds:
 - env:
   - CGO_ENABLED=0
+- main: main.go
+  binary: sshh
+  goos:
+  - windows
+  - darwin
+  - linux
+  goarch:
+  - amd64
 archive:
   replacements:
     darwin: Darwin
