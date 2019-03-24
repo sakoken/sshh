@@ -7,8 +7,6 @@ before:
     # you may remove this if you don't need go generate
     - go generate ./...
 builds:
-- env:
-  - CGO_ENABLED=0
 - main: main.go
   binary: sshh
   goos:
@@ -17,13 +15,6 @@ builds:
   - linux
   goarch:
   - amd64
-archive:
-  replacements:
-    darwin: Darwin
-    linux: Linux
-    windows: Windows
-    386: i386
-    amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
 snapshot:
