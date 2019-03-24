@@ -1,2 +1,2 @@
 # sshh
-ssh history and holding hosts items
+sshh is a management application of hosts for ssh
