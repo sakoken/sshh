@@ -19,11 +19,12 @@ type Sshh struct {
 }
 
 type Host struct {
-	Host     string `json:"host"`
-	User     string `json:"user"`
-	Port     string `json:"port"`
-	Password string `json:"password"`
-	Explain  string `json:"explain"`
+	Host        string `json:"host"`
+	User        string `json:"user"`
+	Port        string `json:"port"`
+	Password    []byte `json:"password"`
+	Key         string `json:"ssh_key"`
+	Explanation string `json:"explanation"`
 }
 
 func (h Host) SshCommand() string {

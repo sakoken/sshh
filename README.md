@@ -1,10 +1,10 @@
 # sshh
-sshh is a management application of hosts for ssh
+sshh is a management application for ssh's host
 
 
 ## Usage
-#### `sshh [keyword]`
-Search a host and paste to clipboard the ssh command<br>
+#### `sshh`
+Search a host and do ssh connection<br>
 It search by contents registered with add<br>
 
 #### `sshh list`
@@ -16,12 +16,13 @@ You can register
 - Host name
 - User name
 - Port number
+- Password(Encrypted with a pass phrase)
 - Explanation
 
-#### `sshh mod 123`
+#### `sshh mod [id]`
 Modify a host interactive
 
-#### `sshh del 123`
+#### `sshh del [id]`
 Delete a host by id
 
 
