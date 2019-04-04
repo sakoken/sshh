@@ -16,9 +16,19 @@ func main() {
 	app := cli.App{}
 	app.Name = "sshh"
 	app.Description = "sshh is a management application of hosts for ssh"
-	app.Version = "0.0.1"
+	app.Version = "0.0.2"
 	app.Before = before()
-	app.Action = action.Search
+	app.Action = func(c *cli.Context) error {
+		search := action.NewSeach()
+		return search.Do(c.String("query"))
+	}
+	app.Flags = []cli.Flag{
+		&cli.StringFlag{
+			Name:    "query",
+			Aliases: []string{"q"},
+			Usage:   "Query of search",
+		},
+	}
 	app.Commands = commands()
 
 	if err := app.Run(os.Args); err != nil {
@@ -68,14 +78,18 @@ func readSshhFile() {
 func commands() []*cli.Command {
 	return []*cli.Command{
 		{
-			Name:   "list",
-			Usage:  "show hosts",
-			Action: action.List,
+			Name:  "list",
+			Usage: "show hosts",
+			Action: func(_ *cli.Context) error {
+				return action.List()
+			},
 		},
 		{
-			Name:   "add",
-			Usage:  "add hosts",
-			Action: action.Add,
+			Name:  "add",
+			Usage: "add hosts",
+			Action: func(_ *cli.Context) error {
+				return action.Add()
+			},
 		},
 		{
 			Name:  "mod",

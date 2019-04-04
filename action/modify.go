@@ -6,9 +6,10 @@ import (
 
 func Modify(id int) error {
 	var host = &global.SshhData.Hosts[id]
-	host.Host = Question("HostName:", true, host.Host)
-	host.User = Question("UserName:", false, host.User)
-	host.Port = Question("HostName:", true, host.Port)
-	host.Explain = Question("Explain:", false, host.Explain)
-	return SaveJson(global.SshhData)
+	host.Host = global.Question("HostName:", true, host.Host)
+	host.User = global.Question("UserName:", false, host.User)
+	host.Port = global.Question("PortNumber:", true, host.Port)
+	//host.Key = Question("SSHKey:", true, host.Key)
+	host.Explanation = global.Question("Explanation:", false, host.Explanation)
+	return global.SaveJson(global.SshhData)
 }

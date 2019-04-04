@@ -1,119 +1,165 @@
 package action
 
 import (
-	"github.com/atotto/clipboard"
-	"github.com/marcusolsson/tui-go"
+	"fmt"
+	"github.com/chzyer/readline"
 	"github.com/sakoken/sshh/global"
-
-	"gopkg.in/urfave/cli.v2"
+	"golang.org/x/crypto/ssh"
+	"io"
+	"log"
+	"os"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
-var hosts *tui.Table
-var selectIndex int
-var showingHostsList []global.Host
+func NewSeach() *Search {
+	return &Search{}
+}
 
-func Search(c *cli.Context) error {
-	arg := c.Args().First()
+type Search struct {
+	showingHostsList []global.Host
+}
 
-	ui, err := tui.New(layout(arg))
-	if err != nil {
-		return err
+func (s *Search) Do(query string) error {
+	cfg := &readline.Config{
+		Prompt:              "\033[31msshh»\033[0m ",
+		InterruptPrompt:     "\n",
+		EOFPrompt:           "exit",
+		FuncFilterInputRune: global.FilterInput,
+		AutoComplete:        s.completer(),
 	}
-	ui.SetKeybinding("Esc", func() { ui.Quit() })
-	ui.SetKeybinding("Ctrl+c", func() { ui.Quit() })
+	l, _ := readline.NewEx(cfg)
+	defer l.Close()
 
-	hosts.OnItemActivated(func(table *tui.Table) {
-		// 未選択中は何もしない
-		if table.Selected() < 0 {
-			return
+	s.showHostsTable(query)
+	selectedNo, password := s.searchLoop(l)
+	if selectedNo >= 0 {
+		host := s.showingHostsList[selectedNo]
+		s.sshConnection(password, host.Host, host.Port, host.User)
+	}
+
+	return nil
+}
+
+func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password string) {
+	for {
+		selectedNo = -1
+		password = ""
+
+		line, err := l.Readline()
+		if err == readline.ErrInterrupt {
+			if len(line) == 0 {
+				break
+			} else {
+				continue
+			}
+		} else if err == io.EOF {
+			break
 		}
-		h := showingHostsList[table.Selected()]
 
-		clipboard.WriteAll(h.SshCommand())
-		ui.Quit()
-	})
-
-	//初回検索
-	find(arg)
-
-	return ui.Run()
-}
-
-func layout(searchKeyword string) tui.Widget {
-
-	hosts = tui.NewTable(0, 0)
-	hosts.UseRuneEvent = false
-	hosts.SetColumnStretch(0, 2)
-	hosts.SetColumnStretch(1, 5)
-	hosts.SetColumnStretch(2, 1)
-	hosts.SetColumnStretch(3, 1)
-	hosts.SetSizePolicy(tui.Maximum, tui.Maximum)
-	hosts.SetFocused(true)
-	hosts.OnSelectionChanged(func(table *tui.Table) {
-		// 現在位置を把握するために取得
-		selectIndex = table.Selected()
-	})
-
-	//初期位置
-	selectIndex = -1
-	hosts.SetSelected(selectIndex)
-
-	for _, s := range global.SshhData.Hosts {
-		hosts.AppendRow(
-			tui.NewLabel(s.Host),
-			tui.NewLabel(s.Explain),
-			tui.NewLabel(s.User),
-			tui.NewLabel(s.Port),
-		)
+		line = strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(line, "#") && len(line) >= 2 && regexp.MustCompile("[0-9]").Match([]byte(line[1:])):
+			selectedNo, _ = strconv.Atoi(line[1:])
+			if len(s.showingHostsList)-1 < selectedNo {
+				continue
+			}
+			host := s.showingHostsList[selectedNo]
+			if len(host.Password) > 0 {
+				key := global.PasswordQuestion(l, "Enter secret key", true, 16)
+				pw, err := global.Decrypt(host.Password, key)
+				if err != nil {
+					println(err.Error())
+					continue
+				}
+				password = string(pw)
+				return
+			}
+		default:
+			s.showHostsTable(line)
+		}
 	}
 
-	searchWidget := tui.NewEntry()
-	searchWidget.SetText(searchKeyword)
-	searchWidget.SetFocused(true)
-	searchWidget.SetSizePolicy(tui.Expanding, tui.Maximum)
-	searchWidget.OnSubmit(func(entry *tui.Entry) {
-		find(entry.Text())
-	})
-	searchWidget.OnChanged(func(entry *tui.Entry) {
-		// 何かしら入力されたら選択を初期化
-		selectIndex = -1
-		hosts.SetSelected(selectIndex)
-	})
-
-	searchLabel := tui.NewLabel("QUERY>>")
-	searchLabel.SetSizePolicy(tui.Minimum, tui.Maximum)
-	searchBox := tui.NewHBox(searchLabel, searchWidget)
-
-	mainFrame := tui.NewVBox(searchBox, hosts, tui.NewSpacer())
-	mainFrame.SetSizePolicy(tui.Maximum, tui.Maximum)
-
-	return mainFrame
+	return
 }
 
-func find(keyword string) {
-	//何か選択中の場合は検索を行わない
-	if selectIndex >= 0 {
-		return
-	}
+func (s *Search) showHostsTable(keyword string) {
+	s.find(keyword)
+	s.printTable()
+}
 
-	showingHostsList = []global.Host{}
+func (s *Search) printTable() {
+	for k, v := range s.showingHostsList {
+		println(fmt.Sprintf("[%d] %s %s %s %s", k, v.Host, v.Port, v.User, v.Explanation))
+	}
+}
+
+func (s *Search) completer() *readline.PrefixCompleter {
+	var child []readline.PrefixCompleterInterface
+	prefix := readline.NewPrefixCompleter()
+	for _, v := range global.SshhData.Hosts {
+		child = append(child, readline.PcItem(v.Host))
+		for _, v := range strings.Split(v.Explanation, " ") {
+			child = append(child, readline.PcItem(v))
+		}
+	}
+	prefix.SetChildren(child)
+	return prefix
+}
+
+func (s *Search) find(keyword string) {
+	var hosts []global.Host
 	for _, v := range global.SshhData.Hosts {
 		if strings.Index(v.Host, keyword) >= 0 ||
 			strings.Index(v.User, keyword) >= 0 ||
 			strings.Index(v.Port, keyword) >= 0 ||
-			strings.Index(v.Explain, keyword) >= 0 {
-			showingHostsList = append(showingHostsList, v)
+			strings.Index(v.Explanation, keyword) >= 0 {
+			hosts = append(hosts, v)
+		}
+	}
+	s.showingHostsList = hosts
+}
+
+func (s *Search) sshConnection(password string, host string, port string, user string) {
+	ce := func(err error, msg string) {
+		if err != nil {
+			log.Fatalf("%s error: %v", msg, err)
 		}
 	}
 
-	hosts.RemoveRows()
-	for _, s := range showingHostsList {
-		hosts.AppendRow(
-			tui.NewLabel(s.Host),
-			tui.NewLabel(s.Explain),
-			tui.NewLabel(s.User),
-			tui.NewLabel(s.Port),
-		)
+	var auth []ssh.AuthMethod
+	auth = append(auth, ssh.Password(password))
+
+	sshConfig := &ssh.ClientConfig{
+		User:            user,
+		Auth:            auth,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
+
+	client, err := ssh.Dial("tcp", host+":"+port, sshConfig)
+	ce(err, "dial")
+
+	session, err := client.NewSession()
+	ce(err, "new session")
+	defer session.Close()
+
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
+	session.Stdin = os.Stdin
+
+	modes := ssh.TerminalModes{
+		ssh.ECHO:          0,
+		ssh.TTY_OP_ISPEED: 14400,
+		ssh.TTY_OP_OSPEED: 14400,
+	}
+	term := os.Getenv("TERM")
+	err = session.RequestPty(term, 25, 80, modes)
+	ce(err, "request pty")
+
+	err = session.Shell()
+	ce(err, "start shell")
+
+	err = session.Wait()
+	ce(err, "return")
 }
