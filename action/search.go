@@ -20,20 +20,20 @@ func NewSeach() *Search {
 
 type Search struct {
 	showingHostsList  []*global.Host
-	rl                *readline.Instance
+	readLine          *readline.Instance
 	positionList      []string
 	selectedWithArrow int
 }
 
 func (s *Search) Do(query string) error {
 	cfg := &readline.Config{
-		Prompt:              "\033[31msshh»\033[0m ",
+		Prompt:              "\033[36msshh»\033[0m ",
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
 		FuncFilterInputRune: s.filterInput,
 		AutoComplete:        s.completer(),
 	}
-	s.rl, _ = readline.NewEx(cfg)
+	s.readLine, _ = readline.NewEx(cfg)
 	defer func(rl *readline.Instance) {
 		if rl != nil {
 			err := rl.Close()
@@ -41,11 +41,11 @@ func (s *Search) Do(query string) error {
 				println(err.Error())
 			}
 		}
-	}(s.rl)
+	}(s.readLine)
 	s.showHostsTable(query)
-	selectedNo, password := s.searchLoop(s.rl)
+	selectedNo, password := s.searchLoop(s.readLine)
 
-	err := s.rl.Close()
+	err := s.readLine.Close()
 	if err != nil {
 		println(err.Error())
 	}
@@ -54,9 +54,7 @@ func (s *Search) Do(query string) error {
 		host := s.showingHostsList[selectedNo]
 		global.SshhData.SetTopPosition(host)
 		global.SaveJson(global.SshhData)
-		println(fmt.Sprintf("\033[32m%s\033[00m", host.SshCommand()))
-		println(fmt.Sprintf("\033[32mExplanation: %s\033[00m", host.Explanation))
-		s.sshConnection(password, host.Host, host.Port, host.User)
+		s.sshConnection(password, host)
 	}
 
 	return nil
@@ -81,7 +79,7 @@ func (s *Search) selectWithArrowUp() {
 		return
 	}
 	s.selectedWithArrow--
-	s.rl.Operation.SetBuffer(s.positionList[s.selectedWithArrow])
+	s.readLine.Operation.SetBuffer(s.positionList[s.selectedWithArrow])
 }
 
 func (s *Search) selectWithArrowDown() {
@@ -89,7 +87,7 @@ func (s *Search) selectWithArrowDown() {
 		return
 	}
 	s.selectedWithArrow++
-	s.rl.Operation.SetBuffer(s.positionList[s.selectedWithArrow])
+	s.readLine.Operation.SetBuffer(s.positionList[s.selectedWithArrow])
 }
 
 func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password string) {
@@ -184,7 +182,10 @@ func (s *Search) find(keyword string) {
 	s.showingHostsList = hosts
 }
 
-func (s *Search) sshConnection(password string, host string, port string, user string) {
+func (s *Search) sshConnection(password string, host *global.Host) {
+	println(fmt.Sprintf("\033[07m\033[34m%s\033[0m", host.SshCommand()))
+	println(fmt.Sprintf("\033[07m\033[34mExplanation: %s\033[0m", host.Explanation))
+
 	ce := func(err error, msg string) {
 		if err != nil {
 			log.Printf("%s error: %v\n", msg, err)
@@ -195,12 +196,12 @@ func (s *Search) sshConnection(password string, host string, port string, user s
 	auth = append(auth, ssh.Password(password))
 
 	sshConfig := &ssh.ClientConfig{
-		User:            user,
+		User:            host.User,
 		Auth:            auth,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	client, err := ssh.Dial("tcp", host+":"+port, sshConfig)
+	client, err := ssh.Dial("tcp", host.Host+":"+host.Port, sshConfig)
 	ce(err, "dial")
 
 	session, err := client.NewSession()

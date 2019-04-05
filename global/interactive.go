@@ -12,7 +12,7 @@ func Password(q string, required bool) []byte {
 	fmt.Println(q)
 
 	l, _ := readline.NewEx(&readline.Config{
-		Prompt:              "\033[31m»\033[0m ",
+		Prompt:              "\033[36msshh»\033[0m ",
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
 		FuncFilterInputRune: filterInput,
@@ -76,7 +76,7 @@ func Question(q string, required bool, def string) string {
 	result := def
 
 	l, _ := readline.NewEx(&readline.Config{
-		Prompt:              "\033[31m»\033[0m ",
+		Prompt:              "\033[36msshh»\033[0m ",
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
 		FuncFilterInputRune: filterInput,
