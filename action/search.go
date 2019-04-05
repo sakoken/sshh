@@ -19,7 +19,10 @@ func NewSeach() *Search {
 }
 
 type Search struct {
-	showingHostsList []*global.Host
+	showingHostsList  []*global.Host
+	rl                *readline.Instance
+	positionList      []string
+	selectedWithArrow int
 }
 
 func (s *Search) Do(query string) error {
@@ -27,22 +30,22 @@ func (s *Search) Do(query string) error {
 		Prompt:              "\033[31msshh»\033[0m ",
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
-		FuncFilterInputRune: global.FilterInput,
+		FuncFilterInputRune: s.filterInput,
 		AutoComplete:        s.completer(),
 	}
-	l, _ := readline.NewEx(cfg)
-	defer func(l *readline.Instance) {
-		if l != nil {
-			err := l.Close()
+	s.rl, _ = readline.NewEx(cfg)
+	defer func(rl *readline.Instance) {
+		if rl != nil {
+			err := rl.Close()
 			if err != nil {
 				println(err.Error())
 			}
 		}
-	}(l)
+	}(s.rl)
 	s.showHostsTable(query)
-	selectedNo, password := s.searchLoop(l)
+	selectedNo, password := s.searchLoop(s.rl)
 
-	err := l.Close()
+	err := s.rl.Close()
 	if err != nil {
 		println(err.Error())
 	}
@@ -57,6 +60,36 @@ func (s *Search) Do(query string) error {
 	}
 
 	return nil
+}
+
+func (s *Search) filterInput(r rune) (rune, bool) {
+	switch r {
+	case readline.CharPrev:
+		s.selectWithArrowUp()
+		return r, false
+	case readline.CharNext:
+		s.selectWithArrowDown()
+		return r, false
+	case readline.CharCtrlZ:
+		return r, false
+	}
+	return r, true
+}
+
+func (s *Search) selectWithArrowUp() {
+	if s.selectedWithArrow <= 0 {
+		return
+	}
+	s.selectedWithArrow--
+	s.rl.Operation.SetBuffer(s.positionList[s.selectedWithArrow])
+}
+
+func (s *Search) selectWithArrowDown() {
+	if s.selectedWithArrow >= len(s.positionList)-1 {
+		return
+	}
+	s.selectedWithArrow++
+	s.rl.Operation.SetBuffer(s.positionList[s.selectedWithArrow])
 }
 
 func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password string) {
@@ -105,6 +138,7 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 
 func (s *Search) showHostsTable(keyword string) {
 	s.find(keyword)
+	s.resetPositionList()
 	s.printTable()
 }
 
@@ -125,6 +159,14 @@ func (s *Search) completer() *readline.PrefixCompleter {
 	}
 	prefix.SetChildren(child)
 	return prefix
+}
+
+func (s *Search) resetPositionList() {
+	s.selectedWithArrow = -1
+	s.positionList = []string{}
+	for k := range s.showingHostsList {
+		s.positionList = append(s.positionList, fmt.Sprintf("#%d", k))
+	}
 }
 
 func (s *Search) find(keyword string) {
@@ -191,6 +233,5 @@ func (s *Search) sshConnection(password string, host string, port string, user s
 	err = session.Shell()
 	ce(err, "start shell")
 
-	err = session.Wait()
-	ce(err, "return")
+	session.Wait()
 }

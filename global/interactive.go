@@ -15,7 +15,7 @@ func Password(q string, required bool) []byte {
 		Prompt:              "\033[31m»\033[0m ",
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
-		FuncFilterInputRune: FilterInput,
+		FuncFilterInputRune: filterInput,
 	})
 
 	defer l.Close()
@@ -34,7 +34,7 @@ func Password(q string, required bool) []byte {
 	return pswd
 }
 
-func FilterInput(r rune) (rune, bool) {
+func filterInput(r rune) (rune, bool) {
 	switch r {
 	// block CtrlZ feature
 	case readline.CharCtrlZ:
@@ -79,7 +79,7 @@ func Question(q string, required bool, def string) string {
 		Prompt:              "\033[31m»\033[0m ",
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
-		FuncFilterInputRune: FilterInput,
+		FuncFilterInputRune: filterInput,
 	})
 
 	defer l.Close()
