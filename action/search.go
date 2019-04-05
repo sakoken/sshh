@@ -5,6 +5,7 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/sakoken/sshh/global"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/terminal"
 	"io"
 	"log"
 	"os"
@@ -30,10 +31,22 @@ func (s *Search) Do(query string) error {
 		AutoComplete:        s.completer(),
 	}
 	l, _ := readline.NewEx(cfg)
-	defer l.Close()
-
+	defer func(l *readline.Instance){
+		if l != nil {
+			err := l.Close()
+			if err != nil {
+				println(err.Error())
+			}
+		}
+	}(l)
 	s.showHostsTable(query)
 	selectedNo, password := s.searchLoop(l)
+
+	err := l.Close()
+	if err != nil {
+		println(err.Error())
+	}
+
 	if selectedNo >= 0 {
 		host := s.showingHostsList[selectedNo]
 		s.sshConnection(password, host.Host, host.Port, host.User)
@@ -144,18 +157,32 @@ func (s *Search) sshConnection(password string, host string, port string, user s
 	ce(err, "new session")
 	defer session.Close()
 
-	session.Stdout = os.Stdout
-	session.Stderr = os.Stderr
-	session.Stdin = os.Stdin
+
+	fd := int(os.Stdin.Fd())
+	state, err := terminal.MakeRaw(fd)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer terminal.Restore(fd, state)
+
+
+	w, h, err := terminal.GetSize(fd)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	modes := ssh.TerminalModes{
-		ssh.ECHO:          0,
+		ssh.ECHO:          1,
 		ssh.TTY_OP_ISPEED: 14400,
 		ssh.TTY_OP_OSPEED: 14400,
 	}
 	term := os.Getenv("TERM")
-	err = session.RequestPty(term, 25, 80, modes)
+	err = session.RequestPty(term, h, w, modes)
 	ce(err, "request pty")
+
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
+	session.Stdin = os.Stdin
 
 	err = session.Shell()
 	ce(err, "start shell")
