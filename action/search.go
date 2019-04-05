@@ -73,6 +73,8 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 
 		line = strings.TrimSpace(line)
 		switch {
+		case strings.HasPrefix(line, "exit"):
+			os.Exit(0)
 		case strings.HasPrefix(line, "#") && len(line) >= 2 && regexp.MustCompile("[0-9]").Match([]byte(line[1:])):
 			selectedNo, _ = strconv.Atoi(line[1:])
 			if len(s.showingHostsList)-1 < selectedNo {
@@ -137,7 +139,7 @@ func (s *Search) find(keyword string) {
 func (s *Search) sshConnection(password string, host string, port string, user string) {
 	ce := func(err error, msg string) {
 		if err != nil {
-			log.Fatalf("%s error: %v", msg, err)
+			log.Printf("%s error: %v\n", msg, err)
 		}
 	}
 
