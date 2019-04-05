@@ -51,6 +51,8 @@ func (s *Search) Do(query string) error {
 		host := s.showingHostsList[selectedNo]
 		global.SshhData.SetTopPosition(host)
 		global.SaveJson(global.SshhData)
+		println(fmt.Sprintf("\033[32m%s\033[00m", host.SshCommand()))
+		println(fmt.Sprintf("\033[32mExplanation: %s\033[00m", host.Explanation))
 		s.sshConnection(password, host.Host, host.Port, host.User)
 	}
 
