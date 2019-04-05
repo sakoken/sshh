@@ -186,12 +186,6 @@ func (s *Search) sshConnection(password string, host *global.Host) {
 	println(fmt.Sprintf("\033[07m\033[34m%s\033[0m", host.SshCommand()))
 	println(fmt.Sprintf("\033[07m\033[34mExplanation: %s\033[0m", host.Explanation))
 
-	ce := func(err error, msg string) {
-		if err != nil {
-			log.Printf("%s error: %v\n", msg, err)
-		}
-	}
-
 	var auth []ssh.AuthMethod
 	auth = append(auth, ssh.Password(password))
 
@@ -202,10 +196,16 @@ func (s *Search) sshConnection(password string, host *global.Host) {
 	}
 
 	client, err := ssh.Dial("tcp", host.Host+":"+host.Port, sshConfig)
-	ce(err, "dial")
+	if err != nil {
+		log.Printf("%s error: %v\n", "dial", err)
+		return
+	}
 
 	session, err := client.NewSession()
-	ce(err, "new session")
+	if err != nil {
+		log.Printf("%s error: %v\n", "new session", err)
+		return
+	}
 	defer session.Close()
 
 	fd := int(os.Stdin.Fd())
@@ -227,14 +227,20 @@ func (s *Search) sshConnection(password string, host *global.Host) {
 	}
 	term := os.Getenv("TERM")
 	err = session.RequestPty(term, h, w, modes)
-	ce(err, "request pty")
+	if err != nil {
+		log.Printf("%s error: %v\n", "request pty", err)
+		return
+	}
 
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stderr
 	session.Stdin = os.Stdin
 
 	err = session.Shell()
-	ce(err, "start shell")
+	if err != nil {
+		log.Printf("%s error: %v\n", "start shell", err)
+		return
+	}
 
 	session.Wait()
 }
