@@ -1,6 +1,8 @@
 # sshh
 sshh is a management application for ssh's host
 
+## Install
+Download from here https://github.com/sakoken/sshh/releases
 
 ## Usage
 #### `sshh`
