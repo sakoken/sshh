@@ -1,12 +1,9 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/sakoken/sshh/action"
 	"github.com/sakoken/sshh/global"
 	"gopkg.in/urfave/cli.v2"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -39,7 +36,6 @@ func main() {
 func before() cli.BeforeFunc {
 	return func(context *cli.Context) error {
 		initSshh()
-		readSshhFile()
 		return nil
 	}
 }
@@ -50,29 +46,12 @@ func initSshh() {
 		log.Fatal(err)
 	}
 	global.UserHome = home
-
-	if _, err := os.Stat(global.SshhJson()); !os.IsNotExist(err) {
-		return
-	}
-
 	if err := os.MkdirAll(global.SshhHome(), 0777); err != nil {
 		log.Fatal(err)
 	}
-
-	file, err := os.OpenFile(global.SshhJson(), os.O_WRONLY|os.O_CREATE, 0700)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	fmt.Fprintln(file, "{}")
-}
-
-func readSshhFile() {
-	dat, err := ioutil.ReadFile(global.SshhJson())
-	if err != nil {
-		log.Fatal(err)
-	}
-	json.Unmarshal(dat, &global.SshhData)
+	global.CreateJson(global.SshhJson())
+	global.ReadJson(global.SshhJson(), &global.SshhData)
+	global.SshhData.ResetPosition()
 }
 
 func commands() []*cli.Command {
@@ -95,22 +74,22 @@ func commands() []*cli.Command {
 			Name:  "mod",
 			Usage: "modify hosts",
 			Action: func(c *cli.Context) error {
-				id, err := strconv.Atoi(c.Args().First())
+				position, err := strconv.Atoi(c.Args().First())
 				if err != nil {
 					return err
 				}
-				return action.Modify(id)
+				return action.Modify(position)
 			},
 		},
 		{
 			Name:  "del",
 			Usage: "delete hosts",
 			Action: func(c *cli.Context) error {
-				id, err := strconv.Atoi(c.Args().First())
+				position, err := strconv.Atoi(c.Args().First())
 				if err != nil {
 					return err
 				}
-				return action.Delete(id)
+				return action.Delete(position)
 			},
 		},
 	}

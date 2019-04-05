@@ -1,6 +1,8 @@
 package global
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	SshhHomeName = ".sshh"
@@ -15,7 +17,7 @@ var (
 )
 
 type Sshh struct {
-	Hosts []Host `json:"hosts"`
+	Hosts []*Host `json:"hosts"`
 }
 
 type Host struct {
@@ -25,6 +27,7 @@ type Host struct {
 	Password    []byte `json:"password"`
 	Key         string `json:"ssh_key"`
 	Explanation string `json:"explanation"`
+	Position    int    `json:"-"`
 }
 
 func (h Host) SshCommand() string {
@@ -39,4 +42,23 @@ func (h Host) SshCommand() string {
 		port = "-p " + h.Port
 	}
 	return fmt.Sprintf("ssh %s%s %s", user, h.Host, port)
+}
+
+func (s *Sshh) SetTopPosition(h *Host) {
+	position := h.Position
+	var tempHosts []*Host
+	tempHosts = append(tempHosts, h)
+	for k, v := range s.Hosts {
+		if k != position {
+			tempHosts = append(tempHosts, v)
+		}
+	}
+	s.Hosts = tempHosts
+	s.ResetPosition()
+}
+
+func (s *Sshh) ResetPosition() {
+	for k, v := range s.Hosts {
+		v.Position = k
+	}
 }

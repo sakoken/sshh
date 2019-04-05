@@ -19,7 +19,7 @@ func NewSeach() *Search {
 }
 
 type Search struct {
-	showingHostsList []global.Host
+	showingHostsList []*global.Host
 }
 
 func (s *Search) Do(query string) error {
@@ -31,7 +31,7 @@ func (s *Search) Do(query string) error {
 		AutoComplete:        s.completer(),
 	}
 	l, _ := readline.NewEx(cfg)
-	defer func(l *readline.Instance){
+	defer func(l *readline.Instance) {
 		if l != nil {
 			err := l.Close()
 			if err != nil {
@@ -49,6 +49,8 @@ func (s *Search) Do(query string) error {
 
 	if selectedNo >= 0 {
 		host := s.showingHostsList[selectedNo]
+		global.SshhData.SetTopPosition(host)
+		global.SaveJson(global.SshhData)
 		s.sshConnection(password, host.Host, host.Port, host.User)
 	}
 
@@ -124,7 +126,7 @@ func (s *Search) completer() *readline.PrefixCompleter {
 }
 
 func (s *Search) find(keyword string) {
-	var hosts []global.Host
+	var hosts []*global.Host
 	for _, v := range global.SshhData.Hosts {
 		if strings.Index(v.Host, keyword) >= 0 ||
 			strings.Index(v.User, keyword) >= 0 ||
@@ -159,14 +161,12 @@ func (s *Search) sshConnection(password string, host string, port string, user s
 	ce(err, "new session")
 	defer session.Close()
 
-
 	fd := int(os.Stdin.Fd())
 	state, err := terminal.MakeRaw(fd)
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer terminal.Restore(fd, state)
-
 
 	w, h, err := terminal.GetSize(fd)
 	if err != nil {

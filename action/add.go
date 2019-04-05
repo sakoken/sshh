@@ -12,7 +12,8 @@ func Add() error {
 	host.Port = global.Question("Port:", true, "22")
 	//host.Key = Question("SSHKey:", true, host.Key)
 	host.Explanation = global.Question("Explanation:", false, "")
-	global.SshhData.Hosts = append(global.SshhData.Hosts, host)
+	global.SshhData.Hosts = append(global.SshhData.Hosts, &host)
+	global.SshhData.ResetPosition()
 
 	return global.SaveJson(global.SshhData)
 }

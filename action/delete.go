@@ -4,14 +4,15 @@ import (
 	"github.com/sakoken/sshh/global"
 )
 
-func Delete(id int) error {
-	var tempHosts []global.Host
+func Delete(position int) error {
+	var tempHosts []*global.Host
 	for k, v := range global.SshhData.Hosts {
-		if k != id {
+		if k != position {
 			tempHosts = append(tempHosts, v)
 		}
 	}
 	global.SshhData.Hosts = tempHosts
+	global.SshhData.ResetPosition()
 
 	return global.SaveJson(global.SshhData)
 }
