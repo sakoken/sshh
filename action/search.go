@@ -77,18 +77,16 @@ func (s *Search) filterInput(r rune) (rune, bool) {
 }
 
 func (s *Search) selectWithArrowUp() {
-	if s.selectedWithArrow <= 0 {
-		return
+	if s.selectedWithArrow > 0 {
+		s.selectedWithArrow--
 	}
-	s.selectedWithArrow--
 	s.rl.Operation.SetBuffer(s.positionList[s.selectedWithArrow])
 }
 
 func (s *Search) selectWithArrowDown() {
-	if s.selectedWithArrow >= len(s.positionList)-1 {
-		return
+	if s.selectedWithArrow < len(s.positionList)-1 {
+		s.selectedWithArrow++
 	}
-	s.selectedWithArrow++
 	s.rl.Operation.SetBuffer(s.positionList[s.selectedWithArrow])
 }
 
