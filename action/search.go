@@ -77,16 +77,18 @@ func (s *Search) filterInput(r rune) (rune, bool) {
 }
 
 func (s *Search) selectWithArrowUp() {
-	if s.selectedWithArrow > 0 {
-		s.selectedWithArrow--
+	if s.selectedWithArrow <= 0 {
+		return
 	}
+	s.selectedWithArrow--
 	s.rl.Operation.SetBuffer(s.positionList[s.selectedWithArrow])
 }
 
 func (s *Search) selectWithArrowDown() {
-	if s.selectedWithArrow < len(s.positionList)-1 {
-		s.selectedWithArrow++
+	if s.selectedWithArrow >= len(s.positionList)-1 {
+		return
 	}
+	s.selectedWithArrow++
 	s.rl.Operation.SetBuffer(s.positionList[s.selectedWithArrow])
 }
 
@@ -108,7 +110,7 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 
 		line = strings.TrimSpace(line)
 		switch {
-		case strings.HasPrefix(line, "exit"):
+		case line == "exit":
 			os.Exit(0)
 		case strings.HasPrefix(line, "#") && len(line) >= 2 && regexp.MustCompile("[0-9]").Match([]byte(line[1:])):
 			selectedNo, _ = strconv.Atoi(line[1:])
@@ -126,6 +128,8 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 				password = string(pw)
 				return
 			}
+
+			println("No password has been set for this host")
 		default:
 			s.showHostsTable(line)
 		}
