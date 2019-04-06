@@ -12,7 +12,7 @@ func main() {
 	app := cli.App{}
 	app.Name = "sshh"
 	app.Description = "sshh is a management application of hosts for ssh"
-	app.Version = "0.0.2"
+	app.Version = "0.0.4"
 	app.Before = before()
 	app.Action = func(c *cli.Context) error {
 		if c.Args().First() != "" {
