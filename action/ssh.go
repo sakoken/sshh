@@ -76,6 +76,8 @@ func (s *Ssh) CreateAndConnection(requestHost string, pOption string, port strin
 }
 
 func SshConnection(password string, host *global.Host) {
+	global.SshhData.SetTopPosition(host)
+	global.SshhData.Save()
 	println(fmt.Sprintf("\033[07m\033[34m%s\033[0m", host.SshCommand()))
 	println(fmt.Sprintf("\033[07m\033[34mExplanation: %s\033[0m", host.Explanation))
 

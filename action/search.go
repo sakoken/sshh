@@ -51,8 +51,6 @@ func (s *Search) Do(query string) error {
 
 	if selectedNo >= 0 {
 		host := s.showingHostsList[selectedNo]
-		global.SshhData.SetTopPosition(host)
-		global.SshhData.Save()
 		SshConnection(password, host)
 	}
 
