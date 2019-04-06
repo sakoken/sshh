@@ -4,11 +4,7 @@ import (
 	"fmt"
 	"github.com/chzyer/readline"
 	"github.com/sakoken/sshh/global"
-	"github.com/sakoken/sshh/model"
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/terminal"
 	"io"
-	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -20,10 +16,11 @@ func NewSeach() *Search {
 }
 
 type Search struct {
-	showingHostsList  []*model.Host
+	showingHostsList  []*global.Host
 	readLine          *readline.Instance
 	positionList      []string
 	selectedWithArrow int
+	lastSearchKeyWord string
 }
 
 func (s *Search) Do(query string) error {
@@ -44,6 +41,7 @@ func (s *Search) Do(query string) error {
 		}
 	}(s.readLine)
 	s.showHostsTable(query)
+
 	selectedNo, password := s.searchLoop(s.readLine)
 
 	err := s.readLine.Close()
@@ -54,8 +52,8 @@ func (s *Search) Do(query string) error {
 	if selectedNo >= 0 {
 		host := s.showingHostsList[selectedNo]
 		global.SshhData.SetTopPosition(host)
-		global.SaveJson(global.SshhData)
-		s.sshConnection(password, host)
+		global.SshhData.Save()
+		SshConnection(password, host)
 	}
 
 	return nil
@@ -109,6 +107,34 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 
 		line = strings.TrimSpace(line)
 		switch {
+		case line == "add":
+			Add()
+			s.showHostsTable(s.lastSearchKeyWord)
+		case strings.HasPrefix(line, "mod"):
+			line = strings.TrimSpace(line[3:])
+			if !(len(line) >= 1 && regexp.MustCompile("[0-9]").Match([]byte(line))) {
+				println("don't fond the number: " + line)
+				continue
+			}
+			sn, _ := strconv.Atoi(line)
+			if len(s.showingHostsList)-1 < sn {
+				continue
+			}
+			Modify(s.showingHostsList[sn].Position)
+			s.showHostsTable(s.lastSearchKeyWord)
+		case strings.HasPrefix(line, "del"):
+			line = strings.TrimSpace(line[3:])
+			if !(len(line) >= 1 && regexp.MustCompile("[0-9]").Match([]byte(line))) {
+				println("don't fond the number: " + line)
+				continue
+			}
+			sn, _ := strconv.Atoi(line)
+			if len(s.showingHostsList)-1 < sn {
+				continue
+			}
+			global.SshhData.Delete(s.showingHostsList[sn].Position)
+			s.showHostsTable(s.lastSearchKeyWord)
+			continue
 		case line == "exit":
 			os.Exit(0)
 		case strings.HasPrefix(line, "#") && len(line) >= 2 && regexp.MustCompile("[0-9]").Match([]byte(line[1:])):
@@ -130,6 +156,7 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 
 			println("No password has been set for this host")
 		default:
+			s.lastSearchKeyWord = line
 			s.showHostsTable(line)
 		}
 	}
@@ -165,7 +192,7 @@ func (s *Search) resetPositionList() {
 }
 
 func (s *Search) find(keyword string) {
-	var hosts []*model.Host
+	var hosts []*global.Host
 	for _, v := range global.SshhData.Hosts {
 		if strings.Index(v.Host, keyword) >= 0 ||
 			strings.Index(v.User, keyword) >= 0 ||
@@ -175,67 +202,4 @@ func (s *Search) find(keyword string) {
 		}
 	}
 	s.showingHostsList = hosts
-}
-
-func (s *Search) sshConnection(password string, host *model.Host) {
-	println(fmt.Sprintf("\033[07m\033[34m%s\033[0m", host.SshCommand()))
-	println(fmt.Sprintf("\033[07m\033[34mExplanation: %s\033[0m", host.Explanation))
-
-	var auth []ssh.AuthMethod
-	auth = append(auth, ssh.Password(password))
-
-	sshConfig := &ssh.ClientConfig{
-		User:            host.User,
-		Auth:            auth,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-
-	client, err := ssh.Dial("tcp", host.Host+":"+host.Port, sshConfig)
-	if err != nil {
-		log.Printf("%s error: %v\n", "dial", err)
-		return
-	}
-
-	session, err := client.NewSession()
-	if err != nil {
-		log.Printf("%s error: %v\n", "new session", err)
-		return
-	}
-	defer session.Close()
-
-	fd := int(os.Stdin.Fd())
-	state, err := terminal.MakeRaw(fd)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer terminal.Restore(fd, state)
-
-	w, h, err := terminal.GetSize(fd)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	modes := ssh.TerminalModes{
-		ssh.ECHO:          1,
-		ssh.TTY_OP_ISPEED: 14400,
-		ssh.TTY_OP_OSPEED: 14400,
-	}
-	term := os.Getenv("TERM")
-	err = session.RequestPty(term, h, w, modes)
-	if err != nil {
-		log.Printf("%s error: %v\n", "request pty", err)
-		return
-	}
-
-	session.Stdout = os.Stdout
-	session.Stderr = os.Stderr
-	session.Stdin = os.Stdin
-
-	err = session.Shell()
-	if err != nil {
-		log.Printf("%s error: %v\n", "start shell", err)
-		return
-	}
-
-	session.Wait()
 }

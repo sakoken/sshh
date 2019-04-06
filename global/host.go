@@ -1,4 +1,4 @@
-package model
+package global
 
 import "fmt"
 
@@ -10,6 +10,11 @@ type Host struct {
 	Key         string `json:"ssh_key"`
 	Explanation string `json:"explanation"`
 	Position    int    `json:"-"`
+}
+
+func (h *Host) Clone() *Host {
+	cp := *h
+	return &cp
 }
 
 func (h Host) SshCommand() string {

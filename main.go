@@ -6,7 +6,6 @@ import (
 	"gopkg.in/urfave/cli.v2"
 	"log"
 	"os"
-	"strconv"
 )
 
 func main() {
@@ -16,6 +15,10 @@ func main() {
 	app.Version = "0.0.2"
 	app.Before = before()
 	app.Action = func(c *cli.Context) error {
+		if c.Args().First() != "" {
+			ssh := action.NewSsh()
+			return ssh.CreateAndConnection(c.Args().Get(0), c.Args().Get(1), c.Args().Get(2))
+		}
 		search := action.NewSeach()
 		return search.Do(c.String("query"))
 	}
@@ -26,7 +29,6 @@ func main() {
 			Usage:   "Query of search",
 		},
 	}
-	app.Commands = commands()
 
 	if err := app.Run(os.Args); err != nil {
 		os.Exit(1)
@@ -50,47 +52,6 @@ func initSshh() {
 		log.Fatal(err)
 	}
 	global.CreateJson(global.SshhJson())
-	global.ReadJson(global.SshhJson(), &global.SshhData)
+	global.ReadJson(global.SshhJson(), &global.SshhData.Hosts)
 	global.SshhData.ResetPosition()
-}
-
-func commands() []*cli.Command {
-	return []*cli.Command{
-		{
-			Name:  "list",
-			Usage: "show hosts",
-			Action: func(_ *cli.Context) error {
-				return action.List()
-			},
-		},
-		{
-			Name:  "add",
-			Usage: "add hosts",
-			Action: func(_ *cli.Context) error {
-				return action.Add()
-			},
-		},
-		{
-			Name:  "mod",
-			Usage: "modify hosts",
-			Action: func(c *cli.Context) error {
-				position, err := strconv.Atoi(c.Args().First())
-				if err != nil {
-					return err
-				}
-				return action.Modify(position)
-			},
-		},
-		{
-			Name:  "del",
-			Usage: "delete hosts",
-			Action: func(c *cli.Context) error {
-				position, err := strconv.Atoi(c.Args().First())
-				if err != nil {
-					return err
-				}
-				return action.Delete(position)
-			},
-		},
-	}
 }

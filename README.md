@@ -6,13 +6,22 @@ Download from here https://github.com/sakoken/sshh/releases
 
 ## Usage
 #### `sshh`
-Search a host and do ssh connection<br>
-It search by contents registered with add<br>
+- Show the list of host
+- Search a host
+- Can do ssh connection
+- Add,Modify,Delete a host
 
-#### `sshh list`
-Show hosts by list
+#### `sshh [hostname]`
+After register the host, do ssh connection
+If the host already is registered, do only ssh connection
 
-#### `sshh add`
+
+## After exec sshh 
+#### `sshh>> #[positionNo]`
+Do ssh connection
+It you can select by Up,Down Arrow
+
+#### `sshh>> add`
 Add a new host interactive<br>
 You can register
 - Host name
@@ -21,11 +30,13 @@ You can register
 - Password(Encrypted with a pass phrase)
 - Explanation
 
-#### `sshh mod [id]`
+#### `sshh>> mod [positionNo]`
 Modify a host interactive
 
-#### `sshh del [id]`
-Delete a host by id
+#### `sshh>> del [positionNo]`
+Delete a host
+
+
 
 
 

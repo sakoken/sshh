@@ -3,39 +3,30 @@ package global
 import (
 	"fmt"
 	"github.com/chzyer/readline"
-	"github.com/sakoken/sshh/model"
 	"io"
 	"os"
 	"strings"
 )
 
-func Password(q string, required bool) []byte {
+func Password(l *readline.Instance, q string, required bool) ([]byte, string) {
 	fmt.Println(q)
 
-	l, _ := readline.NewEx(&readline.Config{
-		Prompt:              "\033[36msshh»\033[0m ",
-		InterruptPrompt:     "\n",
-		EOFPrompt:           "exit",
-		FuncFilterInputRune: filterInput,
-	})
-
-	defer l.Close()
-
-	result := PasswordQuestion(l, "Enter password", required, 0)
+	result := PasswordQuestion(l, "Enter password", required, 1000)
 	if len(result) == 0 {
-		return []byte{}
+		return []byte{}, ""
 	}
 	secretKey := PasswordQuestion(l, "Enter secret key for encrypt", true, 16)
 
 	pswd, err := Encrypt([]byte(result), secretKey)
 	if err != nil {
 		println(err.Error())
+		return []byte{}, ""
 	}
 
-	return pswd
+	return pswd, secretKey
 }
 
-func filterInput(r rune) (rune, bool) {
+func FilterInput(r rune) (rune, bool) {
 	switch r {
 	// block CtrlZ feature
 	case readline.CharCtrlZ:
@@ -72,18 +63,9 @@ func PasswordQuestion(l *readline.Instance, msg string, required bool, maxLength
 	return
 }
 
-func Question(q string, required bool, def string) string {
+func Question(l *readline.Instance, q string, required bool, def string) string {
 	fmt.Println(q)
 	result := def
-
-	l, _ := readline.NewEx(&readline.Config{
-		Prompt:              "\033[36msshh»\033[0m ",
-		InterruptPrompt:     "\n",
-		EOFPrompt:           "exit",
-		FuncFilterInputRune: filterInput,
-	})
-
-	defer l.Close()
 
 	var err error
 	for {
@@ -110,7 +92,7 @@ func Question(q string, required bool, def string) string {
 	return result
 }
 
-func PrintTable(hosts []*model.Host) {
+func PrintTable(hosts []*Host) {
 	hostLen, portLen, userLen := MaxLength(hosts)
 	for k, v := range hosts {
 		host := v.Host + strings.Repeat(" ", hostLen-len(v.Host))
@@ -120,7 +102,7 @@ func PrintTable(hosts []*model.Host) {
 	}
 }
 
-func MaxLength(hosts []*model.Host) (hostLen, portLen, userLen int) {
+func MaxLength(hosts []*Host) (hostLen, portLen, userLen int) {
 	for _, v := range hosts {
 		if len(v.Host) > hostLen {
 			hostLen = len(v.Host)
