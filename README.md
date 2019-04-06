@@ -12,14 +12,13 @@ Download from here https://github.com/sakoken/sshh/releases
 - Add,Modify,Delete a host
 
 #### `sshh [hostname]`
-After register the host, do ssh connection
-If the host already is registered, do only ssh connection
-
+Make SSH connection after host registered.<br>
+If the host is already registered, only SSH connection will be made.
 
 ## After exec sshh 
 #### `sshh>> #[positionNo]`
-Do ssh connection
-It you can select by Up,Down Arrow
+Do ssh connection.<br>
+You can select with the up and down arrows.
 
 #### `sshh>> add`
 Add a new host interactive<br>
