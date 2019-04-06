@@ -3,6 +3,7 @@ package global
 import (
 	"fmt"
 	"github.com/chzyer/readline"
+	"github.com/sakoken/sshh/model"
 	"io"
 	"os"
 	"strings"
@@ -107,4 +108,29 @@ func Question(q string, required bool, def string) string {
 		break
 	}
 	return result
+}
+
+func PrintTable(hosts []*model.Host) {
+	hostLen, portLen, userLen := MaxLength(hosts)
+	for k, v := range hosts {
+		host := v.Host + strings.Repeat(" ", hostLen-len(v.Host))
+		port := v.Port + strings.Repeat(" ", portLen-len(v.Port))
+		user := v.User + strings.Repeat(" ", userLen-len(v.User))
+		println(fmt.Sprintf("[%d] %s  %s  %s  %s", k, host, port, user, v.Explanation))
+	}
+}
+
+func MaxLength(hosts []*model.Host) (hostLen, portLen, userLen int) {
+	for _, v := range hosts {
+		if len(v.Host) > hostLen {
+			hostLen = len(v.Host)
+		}
+		if len(v.Port) > portLen {
+			portLen = len(v.Port)
+		}
+		if len(v.User) > userLen {
+			userLen = len(v.User)
+		}
+	}
+	return
 }

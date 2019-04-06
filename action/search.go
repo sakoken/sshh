@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/chzyer/readline"
 	"github.com/sakoken/sshh/global"
+	"github.com/sakoken/sshh/model"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 	"io"
@@ -19,7 +20,7 @@ func NewSeach() *Search {
 }
 
 type Search struct {
-	showingHostsList  []*global.Host
+	showingHostsList  []*model.Host
 	readLine          *readline.Instance
 	positionList      []string
 	selectedWithArrow int
@@ -139,13 +140,7 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 func (s *Search) showHostsTable(keyword string) {
 	s.find(keyword)
 	s.resetPositionList()
-	s.printTable()
-}
-
-func (s *Search) printTable() {
-	for k, v := range s.showingHostsList {
-		println(fmt.Sprintf("[%d] %s %s %s %s", k, v.Host, v.Port, v.User, v.Explanation))
-	}
+	global.PrintTable(s.showingHostsList)
 }
 
 func (s *Search) completer() *readline.PrefixCompleter {
@@ -170,7 +165,7 @@ func (s *Search) resetPositionList() {
 }
 
 func (s *Search) find(keyword string) {
-	var hosts []*global.Host
+	var hosts []*model.Host
 	for _, v := range global.SshhData.Hosts {
 		if strings.Index(v.Host, keyword) >= 0 ||
 			strings.Index(v.User, keyword) >= 0 ||
@@ -182,7 +177,7 @@ func (s *Search) find(keyword string) {
 	s.showingHostsList = hosts
 }
 
-func (s *Search) sshConnection(password string, host *global.Host) {
+func (s *Search) sshConnection(password string, host *model.Host) {
 	println(fmt.Sprintf("\033[07m\033[34m%s\033[0m", host.SshCommand()))
 	println(fmt.Sprintf("\033[07m\033[34mExplanation: %s\033[0m", host.Explanation))
 
