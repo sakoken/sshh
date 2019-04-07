@@ -22,7 +22,7 @@ func Modify(position int) error {
 	host.Port = global.Question(l, "PortNumber:", true, host.Port)
 	//host.Key = Question("SSHKey:", true, host.Key)
 	host.Explanation = global.Question(l, "Explanation:", false, host.Explanation)
-	if has, _ := global.SshhData.Has(host); has {
+	if has, hasHost := global.SshhData.Has(host); has && host.Position != hasHost.Position {
 		println("\033[31mAlready exists\033[00m")
 		return nil
 	}

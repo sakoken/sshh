@@ -93,16 +93,29 @@ func Question(l *readline.Instance, q string, required bool, def string) string 
 }
 
 func PrintTable(hosts []*Host) {
-	hostLen, portLen, userLen := MaxLength(hosts)
+	hostLen, portLen, userLen := MaxLength(hosts, 4)
+
+	hostStr := "Host"
+	portStr := "Port"
+	userStr := "User"
+
+	hostStr = hostStr + strings.Repeat(" ", hostLen-len(hostStr))
+	portStr = portStr + strings.Repeat(" ", portLen-len(portStr))
+	userStr = userStr + strings.Repeat(" ", userLen-len(userStr))
+
+	println(fmt.Sprintf("[#] %s  %s  %s  %s", hostStr, userStr, portStr, "Explanation"))
 	for k, v := range hosts {
 		host := v.Host + strings.Repeat(" ", hostLen-len(v.Host))
 		port := v.Port + strings.Repeat(" ", portLen-len(v.Port))
 		user := v.User + strings.Repeat(" ", userLen-len(v.User))
-		println(fmt.Sprintf("[%d] %s  %s  %s  %s", k, host, port, user, v.Explanation))
+		println(fmt.Sprintf("[%d] %s  %s  %s  %s", k, host, user, port, v.Explanation))
 	}
 }
 
-func MaxLength(hosts []*Host) (hostLen, portLen, userLen int) {
+func MaxLength(hosts []*Host, def int) (hostLen, portLen, userLen int) {
+	hostLen = def
+	portLen = def
+	userLen = def
 	for _, v := range hosts {
 		if len(v.Host) > hostLen {
 			hostLen = len(v.Host)

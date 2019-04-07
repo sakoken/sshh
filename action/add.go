@@ -18,8 +18,8 @@ func Add() error {
 	host := &global.Host{}
 	host.Host = global.Question(l, "HostName:", true, "")
 	host.User = global.Question(l, "UserName:", false, "")
-	host.Password, _ = global.Password(l, "Password:", false)
 	host.Port = global.Question(l, "Port:", true, "22")
+	host.Password, _ = global.Password(l, "Password:", false)
 	//host.Key = Question("SSHKey:", true, host.Key)
 	host.Explanation = global.Question(l, "Explanation:", false, "")
 	if has, _ := global.SshhData.Has(host); has {
