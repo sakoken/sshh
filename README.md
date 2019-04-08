@@ -21,7 +21,7 @@ Do ssh connection.<br>
 You can select with the up and down arrows.
 
 #### `sshh>> add`
-Add a new host interactive<br>
+Add a new host<br>
 You can register
 - Host name
 - User name
@@ -30,7 +30,7 @@ You can register
 - Explanation
 
 #### `sshh>> mod [positionNo]`
-Modify a host interactive
+Modify a host
 
 #### `sshh>> del [positionNo]`
 Delete a host

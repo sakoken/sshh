@@ -22,6 +22,12 @@ func main() {
 		search := action.NewSeach()
 		return search.Do(c.String("query"))
 	}
+	app.Usage = `https://github.com/sakoken/sshh/blob/master/README.md
+	 [After exec sshh]
+	 sshh>> #[positionNo]    :Do ssh connection
+	 sshh>> add              :Add a new host 
+	 sshh>> mod [positionNo] :Modify a host 
+	 sshh>> del [positionNo] :Delete a host`
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
 			Name:    "query",

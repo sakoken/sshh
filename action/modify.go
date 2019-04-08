@@ -20,6 +20,11 @@ func Modify(position int) error {
 	host.Host = global.Question(l, "HostName:", true, host.Host)
 	host.User = global.Question(l, "UserName:", false, host.User)
 	host.Port = global.Question(l, "PortNumber:", true, host.Port)
+	pswd, _ := global.Password(l, "Password:", false)
+	if len(pswd) > 0 {
+		host.Password = pswd
+	}
+
 	//host.Key = Question("SSHKey:", true, host.Key)
 	host.Explanation = global.Question(l, "Explanation:", false, host.Explanation)
 	if has, hasHost := global.SshhData.Has(host); has && host.Position != hasHost.Position {
