@@ -141,18 +141,27 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 				continue
 			}
 			host := s.showingHostsList[selectedNo]
-			if len(host.Password) > 0 {
-				key := global.PasswordQuestion(l, "Enter secret key", true, 16)
-				pw, err := global.Decrypt(host.Password, key)
-				if err != nil {
-					println(err.Error())
-					continue
-				}
-				password = string(pw)
-				return
+			key := ""
+			if len(host.Password) <= 0 {
+				println("No password has been set for this host")
+				host.Password, key = global.Password(l, "Password:", false)
+				//host.Key = Question("SSHKey:", true, host.Key)
+				global.SshhData.Save()
 			}
 
-			println("No password has been set for this host")
+			if key == "" {
+				key = global.PasswordQuestion(l, "Enter secret key", true, 16)
+			}
+			pw, err := global.Decrypt(host.Password, key)
+			if err != nil {
+				println(err.Error())
+				continue
+			}
+			password = string(pw)
+			return
+
+
+
 		default:
 			s.lastSearchKeyWord = line
 			s.showHostsTable(line)
