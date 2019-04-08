@@ -1,40 +1,43 @@
-package global
+package connector
 
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/sakoken/sshh/config"
 	"io/ioutil"
 )
 
+var SshhData Sshh
+
 type Sshh struct {
-	Hosts []*Host `json:"hosts"`
+	Connectors []*Connector `json:"hosts"`
 }
 
-func (s *Sshh) SetTopPosition(h *Host) {
+func (s *Sshh) SetTopPosition(h *Connector) {
 	position := h.Position
-	var tempHosts []*Host
+	var tempHosts []*Connector
 	tempHosts = append(tempHosts, h)
-	for k, v := range s.Hosts {
+	for k, v := range s.Connectors {
 		if k != position {
 			tempHosts = append(tempHosts, v)
 		}
 	}
-	s.Hosts = tempHosts
+	s.Connectors = tempHosts
 	s.ResetPosition()
 }
 
 func (s *Sshh) ResetPosition() {
-	for k, v := range s.Hosts {
+	for k, v := range s.Connectors {
 		v.Position = k
 	}
 }
 
-func (s *Sshh) Has(h *Host) (bool, *Host) {
+func (s *Sshh) Has(h *Connector) (bool, *Connector) {
 	ch := h.Clone()
 	ch.Password = nil
 	ch.Explanation = ""
 	hb, _ := json.Marshal(ch)
-	for _, v := range s.Hosts {
+	for _, v := range s.Connectors {
 		v2 := v.Clone()
 		v2.Password = nil
 		v2.Explanation = ""
@@ -47,19 +50,19 @@ func (s *Sshh) Has(h *Host) (bool, *Host) {
 }
 
 func (s *Sshh) Delete(position int) {
-	var tempHosts []*Host
-	for k, v := range s.Hosts {
+	var tempHosts []*Connector
+	for k, v := range s.Connectors {
 		if k != position {
 			tempHosts = append(tempHosts, v)
 		}
 	}
-	s.Hosts = tempHosts
+	s.Connectors = tempHosts
 	s.ResetPosition()
 	s.Save()
 }
 
 func (s *Sshh) Save() error {
-	b, err := json.Marshal(s.Hosts)
+	b, err := json.Marshal(s)
 	if err != nil {
 		return err
 	}
@@ -67,5 +70,5 @@ func (s *Sshh) Save() error {
 	if err = json.Indent(&buf, []byte(b), "", "  "); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(SshhJson(), buf.Bytes(), 0777)
+	return ioutil.WriteFile(config.SshhJson(), buf.Bytes(), 0777)
 }

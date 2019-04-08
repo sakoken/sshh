@@ -2,7 +2,9 @@ package main
 
 import (
 	"github.com/sakoken/sshh/action"
-	"github.com/sakoken/sshh/global"
+	"github.com/sakoken/sshh/config"
+	"github.com/sakoken/sshh/connector"
+	"github.com/sakoken/sshh/json"
 	"gopkg.in/urfave/cli.v2"
 	"log"
 	"os"
@@ -19,7 +21,7 @@ func main() {
 			ssh := action.NewSsh()
 			return ssh.CreateAndConnection(c.Args().Get(0), c.Args().Get(1), c.Args().Get(2))
 		}
-		search := action.NewSeach()
+		search := action.NewSearch()
 		return search.Do(c.String("query"))
 	}
 	app.Usage = `https://github.com/sakoken/sshh/blob/master/README.md
@@ -53,11 +55,11 @@ func initSshh() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	global.UserHome = home
-	if err := os.MkdirAll(global.SshhHome(), 0777); err != nil {
+	config.UserHome = home
+	if err := os.MkdirAll(config.SshhHome(), 0777); err != nil {
 		log.Fatal(err)
 	}
-	global.CreateJson(global.SshhJson())
-	global.ReadJson(global.SshhJson(), &global.SshhData.Hosts)
-	global.SshhData.ResetPosition()
+	json.CreateJson(config.SshhJson())
+	json.ReadJson(config.SshhJson(), connector.SshhData)
+	connector.SshhData.ResetPosition()
 }

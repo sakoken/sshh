@@ -1,4 +1,4 @@
-package global
+package config
 
 const (
 	SshhHomeName = ".sshh"
@@ -9,5 +9,4 @@ var (
 	UserHome = ""
 	SshhHome = func() string { return UserHome + "/" + SshhHomeName }
 	SshhJson = func() string { return SshhHome() + "/" + SshhJsonName }
-	SshhData Sshh
 )

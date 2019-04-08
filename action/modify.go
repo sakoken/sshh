@@ -2,7 +2,8 @@ package action
 
 import (
 	"github.com/chzyer/readline"
-	"github.com/sakoken/sshh/global"
+	"github.com/sakoken/sshh/connector"
+	"github.com/sakoken/sshh/interactive"
 )
 
 func Modify(position int) error {
@@ -10,27 +11,27 @@ func Modify(position int) error {
 		Prompt:              "\033[36msshh-mod»\033[0m ",
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
-		FuncFilterInputRune: global.FilterInput,
+		FuncFilterInputRune: interactive.FilterInput,
 	})
 
 	defer l.Close()
 
-	var host = global.SshhData.Hosts[position]
+	var host = connector.SshhData.Connectors[position]
 	host = host.Clone()
-	host.Host = global.Question(l, "HostName:", true, host.Host)
-	host.User = global.Question(l, "UserName:", false, host.User)
-	host.Port = global.Question(l, "PortNumber:", true, host.Port)
-	pswd, _ := global.Password(l, "Password:", false)
+	host.Host = interactive.Question(l, "HostName:", true, host.Host)
+	host.User = interactive.Question(l, "UserName:", false, host.User)
+	host.Port = interactive.Question(l, "PortNumber:", true, host.Port)
+	pswd, _ := interactive.Password(l, "Password:", false)
 	if len(pswd) > 0 {
 		host.Password = pswd
 	}
 
 	//host.Key = Question("SSHKey:", true, host.Key)
-	host.Explanation = global.Question(l, "Explanation:", false, host.Explanation)
-	if has, hasHost := global.SshhData.Has(host); has && host.Position != hasHost.Position {
+	host.Explanation = interactive.Question(l, "Explanation:", false, host.Explanation)
+	if has, hasHost := connector.SshhData.Has(host); has && host.Position != hasHost.Position {
 		println("\033[31mAlready exists\033[00m")
 		return nil
 	}
-	global.SshhData.Hosts[position] = host
-	return global.SshhData.Save()
+	connector.SshhData.Connectors[position] = host
+	return connector.SshhData.Save()
 }

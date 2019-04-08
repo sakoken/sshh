@@ -3,7 +3,9 @@ package action
 import (
 	"fmt"
 	"github.com/chzyer/readline"
-	"github.com/sakoken/sshh/global"
+	"github.com/sakoken/sshh/connector"
+	"github.com/sakoken/sshh/encrypt"
+	"github.com/sakoken/sshh/interactive"
 	"io"
 	"os"
 	"regexp"
@@ -11,12 +13,12 @@ import (
 	"strings"
 )
 
-func NewSeach() *Search {
+func NewSearch() *Search {
 	return &Search{}
 }
 
 type Search struct {
-	showingHostsList  []*global.Host
+	showingHostsList  []*connector.Connector
 	readLine          *readline.Instance
 	positionList      []string
 	selectedWithArrow int
@@ -51,7 +53,7 @@ func (s *Search) Do(query string) error {
 
 	if selectedNo >= 0 {
 		host := s.showingHostsList[selectedNo]
-		SshConnection(password, host)
+		host.SshConnection(password)
 	}
 
 	return nil
@@ -130,7 +132,7 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 			if len(s.showingHostsList)-1 < sn {
 				continue
 			}
-			global.SshhData.Delete(s.showingHostsList[sn].Position)
+			connector.SshhData.Delete(s.showingHostsList[sn].Position)
 			s.showHostsTable(s.lastSearchKeyWord)
 			continue
 		case line == "exit":
@@ -141,18 +143,25 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 				continue
 			}
 			host := s.showingHostsList[selectedNo]
-			if len(host.Password) > 0 {
-				key := global.PasswordQuestion(l, "Enter secret key", true, 16)
-				pw, err := global.Decrypt(host.Password, key)
-				if err != nil {
-					println(err.Error())
-					continue
-				}
-				password = string(pw)
-				return
+			key := ""
+			if len(host.Password) <= 0 {
+				println("No password has been set for this host")
+				host.Password, key = interactive.Password(l, "Password:", false)
+				//host.Key = Question("SSHKey:", true, host.Key)
+				connector.SshhData.Save()
 			}
 
-			println("No password has been set for this host")
+			if key == "" {
+				key = interactive.PasswordQuestion(l, "Enter secret key", true, 16)
+			}
+			pw, err := encrypt.Decrypt(host.Password, key)
+			if err != nil {
+				println(err.Error())
+				continue
+			}
+			password = string(pw)
+			return
+
 		default:
 			s.lastSearchKeyWord = line
 			s.showHostsTable(line)
@@ -165,13 +174,13 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 func (s *Search) showHostsTable(keyword string) {
 	s.find(keyword)
 	s.resetPositionList()
-	global.PrintTable(s.showingHostsList)
+	interactive.PrintTable(s.showingHostsList)
 }
 
 func (s *Search) completer() *readline.PrefixCompleter {
 	var child []readline.PrefixCompleterInterface
 	prefix := readline.NewPrefixCompleter()
-	for _, v := range global.SshhData.Hosts {
+	for _, v := range connector.SshhData.Connectors {
 		child = append(child, readline.PcItem(v.Host))
 		for _, v := range strings.Split(v.Explanation, " ") {
 			child = append(child, readline.PcItem(v))
@@ -190,8 +199,8 @@ func (s *Search) resetPositionList() {
 }
 
 func (s *Search) find(keyword string) {
-	var hosts []*global.Host
-	for _, v := range global.SshhData.Hosts {
+	var hosts []*connector.Connector
+	for _, v := range connector.SshhData.Connectors {
 		if strings.Index(v.Host, keyword) >= 0 ||
 			strings.Index(v.User, keyword) >= 0 ||
 			strings.Index(v.Port, keyword) >= 0 ||

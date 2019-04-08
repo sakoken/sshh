@@ -1,10 +1,13 @@
-package global
+package interactive
 
 import (
 	"fmt"
 	"github.com/chzyer/readline"
+	"github.com/sakoken/sshh/connector"
+	"github.com/sakoken/sshh/encrypt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -17,7 +20,7 @@ func Password(l *readline.Instance, q string, required bool) ([]byte, string) {
 	}
 	secretKey := PasswordQuestion(l, "Enter secret key for encrypt", true, 16)
 
-	pswd, err := Encrypt([]byte(result), secretKey)
+	pswd, err := encrypt.Encrypt([]byte(result), secretKey)
 	if err != nil {
 		println(err.Error())
 		return []byte{}, ""
@@ -92,7 +95,7 @@ func Question(l *readline.Instance, q string, required bool, def string) string 
 	return result
 }
 
-func PrintTable(hosts []*Host) {
+func PrintTable(hosts []*connector.Connector) {
 	hostLen, portLen, userLen := MaxLength(hosts, 4)
 
 	hostStr := "Host"
@@ -103,16 +106,20 @@ func PrintTable(hosts []*Host) {
 	portStr = portStr + strings.Repeat(" ", portLen-len(portStr))
 	userStr = userStr + strings.Repeat(" ", userLen-len(userStr))
 
-	println(fmt.Sprintf("[#] %s  %s  %s  %s", hostStr, userStr, portStr, "Explanation"))
+	lenOfNo := len(strconv.Itoa(len(hosts)))
+	noSpace := strings.Repeat(" ", lenOfNo-1)
+	println(fmt.Sprintf("[#]"+noSpace+" %s  %s  %s  %s", hostStr, userStr, portStr, "Explanation"))
+	noStr := "[%d]"
 	for k, v := range hosts {
+		noSpace = strings.Repeat(" ", lenOfNo-len(strconv.Itoa(k)))
 		host := v.Host + strings.Repeat(" ", hostLen-len(v.Host))
 		port := v.Port + strings.Repeat(" ", portLen-len(v.Port))
 		user := v.User + strings.Repeat(" ", userLen-len(v.User))
-		println(fmt.Sprintf("[%d] %s  %s  %s  %s", k, host, user, port, v.Explanation))
+		println(fmt.Sprintf(noStr+noSpace+" %s  %s  %s  %s", k, host, user, port, v.Explanation))
 	}
 }
 
-func MaxLength(hosts []*Host, def int) (hostLen, portLen, userLen int) {
+func MaxLength(hosts []*connector.Connector, def int) (hostLen, portLen, userLen int) {
 	hostLen = def
 	portLen = def
 	userLen = def
