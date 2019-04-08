@@ -19,7 +19,7 @@ func main() {
 			ssh := action.NewSsh()
 			return ssh.CreateAndConnection(c.Args().Get(0), c.Args().Get(1), c.Args().Get(2))
 		}
-		search := action.NewSeach()
+		search := action.NewSearch()
 		return search.Do(c.String("query"))
 	}
 	app.Flags = []cli.Flag{
@@ -52,6 +52,6 @@ func initSshh() {
 		log.Fatal(err)
 	}
 	global.CreateJson(global.SshhJson())
-	global.ReadJson(global.SshhJson(), &global.SshhData.Hosts)
+	global.ReadJson(global.SshhJson(), &global.SshhData)
 	global.SshhData.ResetPosition()
 }

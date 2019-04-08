@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func NewSeach() *Search {
+func NewSearch() *Search {
 	return &Search{}
 }
 

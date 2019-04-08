@@ -5,6 +5,7 @@ import (
 	"github.com/chzyer/readline"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -103,12 +104,16 @@ func PrintTable(hosts []*Host) {
 	portStr = portStr + strings.Repeat(" ", portLen-len(portStr))
 	userStr = userStr + strings.Repeat(" ", userLen-len(userStr))
 
-	println(fmt.Sprintf("[#] %s  %s  %s  %s", hostStr, userStr, portStr, "Explanation"))
+	lenOfNo := len(strconv.Itoa(len(hosts)))
+	noSpace := strings.Repeat(" ", lenOfNo-1)
+	println(fmt.Sprintf("[#]"+noSpace+" %s  %s  %s  %s", hostStr, userStr, portStr, "Explanation"))
+	noStr := "[%d]"
 	for k, v := range hosts {
+		noSpace = strings.Repeat(" ",lenOfNo-len(strconv.Itoa(k)))
 		host := v.Host + strings.Repeat(" ", hostLen-len(v.Host))
 		port := v.Port + strings.Repeat(" ", portLen-len(v.Port))
 		user := v.User + strings.Repeat(" ", userLen-len(v.User))
-		println(fmt.Sprintf("[%d] %s  %s  %s  %s", k, host, user, port, v.Explanation))
+		println(fmt.Sprintf(noStr + noSpace + " %s  %s  %s  %s", k, host, user, port, v.Explanation))
 	}
 }
 

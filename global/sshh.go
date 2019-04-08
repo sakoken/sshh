@@ -59,7 +59,7 @@ func (s *Sshh) Delete(position int) {
 }
 
 func (s *Sshh) Save() error {
-	b, err := json.Marshal(s.Hosts)
+	b, err := json.Marshal(s)
 	if err != nil {
 		return err
 	}
