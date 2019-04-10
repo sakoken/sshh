@@ -23,6 +23,12 @@ func (h *Connector) Clone() *Connector {
 	return &cp
 }
 
+func (h *Connector) Equals(host *Connector) bool {
+	return h.Host == host.Host &&
+		h.User == host.User &&
+		h.Port == host.Port
+}
+
 func (h Connector) SshCommand() string {
 	user := ""
 	port := ""
@@ -38,8 +44,6 @@ func (h Connector) SshCommand() string {
 }
 
 func (h Connector) SshConnection(password string) {
-	SshhData.SetTopPosition(&h)
-	SshhData.Save()
 	println(fmt.Sprintf("\033[07m\033[34m%s\033[0m", h.SshCommand()))
 	println(fmt.Sprintf("\033[07m\033[34mExplanation: %s\033[0m", h.Explanation))
 

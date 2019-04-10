@@ -8,14 +8,7 @@ import (
 	"strings"
 )
 
-func NewSsh() *Ssh {
-	return &Ssh{}
-}
-
-type Ssh struct {
-}
-
-func (s *Ssh) CreateAndConnection(requestHost string, pOption string, port string) error {
+func CreateAndConnection(requestHost string, pOption string, port string) error {
 	host := &connector.Connector{}
 	host.Host = requestHost
 	host.Port = "22"
@@ -44,13 +37,14 @@ func (s *Ssh) CreateAndConnection(requestHost string, pOption string, port strin
 	}(l)
 
 	//すでに登録済みの場合はすぐにssh
-	if has, resistedHost := connector.SshhData.Has(host); has {
+	if has, resistedHost := connector.SshhData().Has(host); has {
 		key := interactive.PasswordQuestion(l, "Enter secret key", true, 16)
 		l.Close()
 		pw, err := encrypt.Decrypt(resistedHost.Password, key)
 		if err != nil {
 			return err
 		}
+		connector.SshhData().SetTopPosition(resistedHost).Save()
 		resistedHost.SshConnection(string(pw))
 		return nil
 	}
@@ -59,15 +53,13 @@ func (s *Ssh) CreateAndConnection(requestHost string, pOption string, port strin
 	host.Password, key = interactive.Password(l, "Password:", true)
 	l.Close()
 
-	connector.SshhData.Connectors = append(connector.SshhData.Connectors, host)
-	connector.SshhData.ResetPosition()
-	connector.SshhData.Save()
+	connector.SshhData().Add(host).Save()
 
 	pw, err := encrypt.Decrypt(host.Password, key)
 	if err != nil {
 		return err
 	}
-
+	connector.SshhData().SetTopPosition(host).Save()
 	host.SshConnection(string(pw))
 	return nil
 }

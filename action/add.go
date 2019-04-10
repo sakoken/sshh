@@ -20,14 +20,13 @@ func Add() error {
 	host.Host = interactive.Question(l, "HostName:", true, "")
 	host.User = interactive.Question(l, "UserName:", false, "")
 	host.Port = interactive.Question(l, "Port:", true, "22")
-	host.Password, _ = interactive.Password(l, "Password:", false)
-	//host.Key = Question("SSHKey:", true, host.Key)
-	host.Explanation = interactive.Question(l, "Explanation:", false, "")
-	if has, _ := connector.SshhData.Has(host); has {
+	if has, _ := connector.SshhData().Has(host); has {
 		println("\033[31mAlready exists\033[00m")
 		return nil
 	}
-	connector.SshhData.Connectors = append(connector.SshhData.Connectors, host)
-	connector.SshhData.ResetPosition()
-	return connector.SshhData.Save()
+	host.Password, _ = interactive.Password(l, "Password:", false)
+	//host.Key = Question("SSHKey:", true, host.Key)
+	host.Explanation = interactive.Question(l, "Explanation:", false, "")
+
+	return connector.SshhData().Add(host).Save()
 }

@@ -53,6 +53,7 @@ func (s *Search) Do(query string) error {
 
 	if selectedNo >= 0 {
 		host := s.showingHostsList[selectedNo]
+		connector.SshhData().SetTopPosition(host).Save()
 		host.SshConnection(password)
 	}
 
@@ -132,7 +133,7 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 			if len(s.showingHostsList)-1 < sn {
 				continue
 			}
-			connector.SshhData.Delete(s.showingHostsList[sn].Position)
+			connector.SshhData().Delete(s.showingHostsList[sn].Position)
 			s.showHostsTable(s.lastSearchKeyWord)
 			continue
 		case line == "exit":
@@ -148,7 +149,7 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 				println("No password has been set for this host")
 				host.Password, key = interactive.Password(l, "Password:", false)
 				//host.Key = Question("SSHKey:", true, host.Key)
-				connector.SshhData.Save()
+				connector.SshhData().Save()
 			}
 
 			if key == "" {
@@ -180,7 +181,7 @@ func (s *Search) showHostsTable(keyword string) {
 func (s *Search) completer() *readline.PrefixCompleter {
 	var child []readline.PrefixCompleterInterface
 	prefix := readline.NewPrefixCompleter()
-	for _, v := range connector.SshhData.Connectors {
+	for _, v := range connector.SshhData().Connectors {
 		child = append(child, readline.PcItem(v.Host))
 		for _, v := range strings.Split(v.Explanation, " ") {
 			child = append(child, readline.PcItem(v))
@@ -200,7 +201,7 @@ func (s *Search) resetPositionList() {
 
 func (s *Search) find(keyword string) {
 	var hosts []*connector.Connector
-	for _, v := range connector.SshhData.Connectors {
+	for _, v := range connector.SshhData().Connectors {
 		if strings.Index(v.Host, keyword) >= 0 ||
 			strings.Index(v.User, keyword) >= 0 ||
 			strings.Index(v.Port, keyword) >= 0 ||

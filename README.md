@@ -11,9 +11,10 @@ Download from here https://github.com/sakoken/sshh/releases
 - Can do ssh connection
 - Add,Modify,Delete a host
 
-#### `sshh [hostname]`
-Make SSH connection after host registered.<br>
-If the host is already registered, only SSH connection will be made.
+#### `sshh [user]@[hostname] -p [port]`
+Register and make SSH connection.<br>
+If the host is already registered, only SSH connection will be made.<br>
+Default port is 22
 
 ## After exec sshh 
 #### `sshh>> #[positionNo]`
@@ -25,7 +26,7 @@ Add a new host<br>
 You can register
 - Host name
 - User name
-- Port number
+- Port number(Default 22)
 - Password(Encrypted with a pass phrase)
 - Explanation
 

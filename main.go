@@ -4,7 +4,6 @@ import (
 	"github.com/sakoken/sshh/action"
 	"github.com/sakoken/sshh/config"
 	"github.com/sakoken/sshh/connector"
-	"github.com/sakoken/sshh/json"
 	"gopkg.in/urfave/cli.v2"
 	"log"
 	"os"
@@ -18,8 +17,7 @@ func main() {
 	app.Before = before()
 	app.Action = func(c *cli.Context) error {
 		if c.Args().First() != "" {
-			ssh := action.NewSsh()
-			return ssh.CreateAndConnection(c.Args().Get(0), c.Args().Get(1), c.Args().Get(2))
+			return action.CreateAndConnection(c.Args().Get(0), c.Args().Get(1), c.Args().Get(2))
 		}
 		search := action.NewSearch()
 		return search.Do(c.String("query"))
@@ -59,7 +57,6 @@ func initSshh() {
 	if err := os.MkdirAll(config.SshhHome(), 0777); err != nil {
 		log.Fatal(err)
 	}
-	json.CreateJson(config.SshhJson())
-	json.ReadJson(config.SshhJson(), connector.SshhData)
-	connector.SshhData.ResetPosition()
+	config.CreateJson(config.SshhJson())
+	connector.SshhData()
 }

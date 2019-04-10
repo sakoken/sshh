@@ -5,15 +5,32 @@ import (
 	"encoding/json"
 	"github.com/sakoken/sshh/config"
 	"io/ioutil"
+	"sync"
 )
 
-var SshhData Sshh
+var sshhData *Sshh
+var once sync.Once
+
+func SshhData() *Sshh {
+	once.Do(func() {
+		config.ReadJson(config.SshhJson(), &sshhData)
+		sshhData.resetPosition()
+	})
+
+	return sshhData
+}
 
 type Sshh struct {
 	Connectors []*Connector `json:"hosts"`
 }
 
-func (s *Sshh) SetTopPosition(h *Connector) {
+func (s *Sshh) Add(h *Connector) *Sshh {
+	s.Connectors = append(s.Connectors, h)
+	s.resetPosition()
+	return s
+}
+
+func (s *Sshh) SetTopPosition(h *Connector) *Sshh {
 	position := h.Position
 	var tempHosts []*Connector
 	tempHosts = append(tempHosts, h)
@@ -23,26 +40,20 @@ func (s *Sshh) SetTopPosition(h *Connector) {
 		}
 	}
 	s.Connectors = tempHosts
-	s.ResetPosition()
+	s.resetPosition()
+	return s
 }
 
-func (s *Sshh) ResetPosition() {
+func (s *Sshh) resetPosition() *Sshh {
 	for k, v := range s.Connectors {
 		v.Position = k
 	}
+	return s
 }
 
 func (s *Sshh) Has(h *Connector) (bool, *Connector) {
-	ch := h.Clone()
-	ch.Password = nil
-	ch.Explanation = ""
-	hb, _ := json.Marshal(ch)
 	for _, v := range s.Connectors {
-		v2 := v.Clone()
-		v2.Password = nil
-		v2.Explanation = ""
-		b, _ := json.Marshal(v2)
-		if string(hb) == string(b) {
+		if h.Equals(v) {
 			return true, v
 		}
 	}
@@ -57,7 +68,7 @@ func (s *Sshh) Delete(position int) {
 		}
 	}
 	s.Connectors = tempHosts
-	s.ResetPosition()
+	s.resetPosition()
 	s.Save()
 }
 
