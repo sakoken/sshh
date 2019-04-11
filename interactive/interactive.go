@@ -11,14 +11,40 @@ import (
 	"strings"
 )
 
-func Password(l *readline.Instance, q string, required bool) ([]byte, string) {
+type Interactive struct {
+	readline.Instance
+}
+
+type defaultPainter struct{}
+
+func (p *defaultPainter) Paint(line []rune, _ int) []rune {
+	return line
+}
+
+func NewEx(cfg *readline.Config) (*Interactive, error) {
+	t, err := readline.NewTerminal(cfg)
+	if err != nil {
+		return nil, err
+	}
+	rl := t.Readline()
+	if cfg.Painter == nil {
+		cfg.Painter = &defaultPainter{}
+	}
+	i := &Interactive{}
+	i.Config = cfg
+	i.Terminal = t
+	i.Operation = rl
+	return i, nil
+}
+
+func (i *Interactive) Password(q string, required bool) ([]byte, string) {
 	fmt.Println(q)
 
-	result := PasswordQuestion(l, "Enter password", required, 1000)
+	result := i.PasswordQuestion("Enter password", required, 1000)
 	if len(result) == 0 {
 		return []byte{}, ""
 	}
-	secretKey := PasswordQuestion(l, "Enter secret key for encrypt", true, 16)
+	secretKey := i.PasswordQuestion("Enter secret key for encrypt", true, 16)
 
 	pswd, err := encrypt.Encrypt([]byte(result), secretKey)
 	if err != nil {
@@ -38,15 +64,15 @@ func FilterInput(r rune) (rune, bool) {
 	return r, true
 }
 
-func PasswordQuestion(l *readline.Instance, msg string, required bool, maxLength int) (result string) {
-	cfg := l.GenPasswordConfig()
+func (i *Interactive) PasswordQuestion(msg string, required bool, maxLength int) (result string) {
+	cfg := i.GenPasswordConfig()
 	cfg.SetListener(func(line []rune, pos int, key rune) (newLine []rune, newPos int, ok bool) {
-		l.SetPrompt(fmt.Sprintf(msg+"(%v): ", len(line)))
-		l.Refresh()
+		i.SetPrompt(fmt.Sprintf(msg+"(%v): ", len(line)))
+		i.Refresh()
 		return nil, 0, false
 	})
 
-	pw, err := l.ReadPasswordWithConfig(cfg)
+	pw, err := i.ReadPasswordWithConfig(cfg)
 	if err == readline.ErrInterrupt {
 		if len(pw) != 0 {
 			return
@@ -61,18 +87,18 @@ func PasswordQuestion(l *readline.Instance, msg string, required bool, maxLength
 		if len(result) >= maxLength {
 			fmt.Printf("Please enter less then %d\n", maxLength)
 		}
-		result = PasswordQuestion(l, msg, required, maxLength)
+		result = i.PasswordQuestion(msg, required, maxLength)
 	}
 	return
 }
 
-func Question(l *readline.Instance, q string, required bool, def string) string {
+func (i *Interactive) Question(q string, required bool, def string) string {
 	fmt.Println(q)
 	result := def
 
 	var err error
 	for {
-		result, err = l.ReadlineWithDefault(def)
+		result, err = i.ReadlineWithDefault(def)
 		result = strings.TrimSpace(result)
 
 		if err == readline.ErrInterrupt {
@@ -95,8 +121,8 @@ func Question(l *readline.Instance, q string, required bool, def string) string 
 	return result
 }
 
-func PrintTable(hosts []*connector.Connector) {
-	hostLen, portLen, userLen := MaxLength(hosts, 4)
+func (i *Interactive) PrintTable(hosts []*connector.Connector) {
+	hostLen, portLen, userLen := i.MaxLength(hosts, 4)
 
 	hostStr := "Host"
 	portStr := "Port"
@@ -119,7 +145,7 @@ func PrintTable(hosts []*connector.Connector) {
 	}
 }
 
-func MaxLength(hosts []*connector.Connector, def int) (hostLen, portLen, userLen int) {
+func (i *Interactive) MaxLength(hosts []*connector.Connector, def int) (hostLen, portLen, userLen int) {
 	hostLen = def
 	portLen = def
 	userLen = def

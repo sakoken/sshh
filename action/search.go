@@ -19,7 +19,7 @@ func NewSearch() *Search {
 
 type Search struct {
 	showingHostsList  []*connector.Connector
-	readLine          *readline.Instance
+	readLine          *interactive.Interactive
 	positionList      []string
 	selectedWithArrow int
 	lastSearchKeyWord string
@@ -31,10 +31,9 @@ func (s *Search) Do(query string) error {
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
 		FuncFilterInputRune: s.filterInput,
-		AutoComplete:        s.completer(),
 	}
-	s.readLine, _ = readline.NewEx(cfg)
-	defer func(rl *readline.Instance) {
+	s.readLine, _ = interactive.NewEx(cfg)
+	defer func(rl *interactive.Interactive) {
 		if rl != nil {
 			err := rl.Close()
 			if err != nil {
@@ -44,7 +43,7 @@ func (s *Search) Do(query string) error {
 	}(s.readLine)
 	s.showHostsTable(query)
 
-	selectedNo, password := s.searchLoop(s.readLine)
+	selectedNo, password := s.searchLoop()
 
 	err := s.readLine.Close()
 	if err != nil {
@@ -90,12 +89,12 @@ func (s *Search) selectWithArrowDown() {
 	s.readLine.Operation.SetBuffer(s.positionList[s.selectedWithArrow])
 }
 
-func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password string) {
+func (s *Search) searchLoop() (selectedNo int, password string) {
 	for {
 		selectedNo = -1
 		password = ""
 
-		line, err := l.Readline()
+		line, err := s.readLine.Readline()
 		if err == readline.ErrInterrupt {
 			if len(line) == 0 {
 				break
@@ -147,13 +146,13 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 			key := ""
 			if len(host.Password) <= 0 {
 				println("No password has been set for this host")
-				host.Password, key = interactive.Password(l, "Password:", false)
+				host.Password, key = s.readLine.Password("Password:", false)
 				//host.Key = Question("SSHKey:", true, host.Key)
 				connector.SshhData().Save()
 			}
 
 			if key == "" {
-				key = interactive.PasswordQuestion(l, "Enter secret key", true, 16)
+				key = s.readLine.PasswordQuestion("Enter secret key", true, 16)
 			}
 			pw, err := encrypt.Decrypt(host.Password, key)
 			if err != nil {
@@ -175,20 +174,7 @@ func (s *Search) searchLoop(l *readline.Instance) (selectedNo int, password stri
 func (s *Search) showHostsTable(keyword string) {
 	s.find(keyword)
 	s.resetPositionList()
-	interactive.PrintTable(s.showingHostsList)
-}
-
-func (s *Search) completer() *readline.PrefixCompleter {
-	var child []readline.PrefixCompleterInterface
-	prefix := readline.NewPrefixCompleter()
-	for _, v := range connector.SshhData().Connectors {
-		child = append(child, readline.PcItem(v.Host))
-		for _, v := range strings.Split(v.Explanation, " ") {
-			child = append(child, readline.PcItem(v))
-		}
-	}
-	prefix.SetChildren(child)
-	return prefix
+	s.readLine.PrintTable(s.showingHostsList)
 }
 
 func (s *Search) resetPositionList() {

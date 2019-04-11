@@ -20,26 +20,26 @@ func CreateAndConnection(requestHost string, pOption string, port string) error 
 		host.Port = port
 	}
 
-	l, _ := readline.NewEx(&readline.Config{
+	i, _ := interactive.NewEx(&readline.Config{
 		Prompt:              "\033[36msshh»\033[0m ",
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
 		FuncFilterInputRune: interactive.FilterInput,
 	})
 
-	defer func(rl *readline.Instance) {
+	defer func(rl *interactive.Interactive) {
 		if rl != nil {
 			err := rl.Close()
 			if err != nil {
 				println(err.Error())
 			}
 		}
-	}(l)
+	}(i)
 
 	//すでに登録済みの場合はすぐにssh
 	if has, resistedHost := connector.SshhData().Has(host); has {
-		key := interactive.PasswordQuestion(l, "Enter secret key", true, 16)
-		l.Close()
+		key := i.PasswordQuestion("Enter secret key", true, 16)
+		i.Close()
 		pw, err := encrypt.Decrypt(resistedHost.Password, key)
 		if err != nil {
 			return err
@@ -50,8 +50,8 @@ func CreateAndConnection(requestHost string, pOption string, port string) error 
 	}
 
 	key := ""
-	host.Password, key = interactive.Password(l, "Password:", true)
-	l.Close()
+	host.Password, key = i.Password("Password:", true)
+	i.Close()
 
 	connector.SshhData().Add(host).Save()
 
