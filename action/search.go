@@ -2,15 +2,16 @@ package action
 
 import (
 	"fmt"
-	"github.com/chzyer/readline"
-	"github.com/sakoken/sshh/connector"
-	"github.com/sakoken/sshh/encrypt"
-	"github.com/sakoken/sshh/interactive"
 	"io"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/chzyer/readline"
+	"github.com/sakoken/sshh/connector"
+	"github.com/sakoken/sshh/encrypt"
+	"github.com/sakoken/sshh/interactive"
 )
 
 func NewSearch() *Search {
@@ -26,13 +27,16 @@ type Search struct {
 }
 
 func (s *Search) Do(query string) error {
-	cfg := &readline.Config{
+	var err error
+	s.readLine, err = interactive.NewEx(&readline.Config{
 		Prompt:              "\033[36msshh»\033[0m ",
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
 		FuncFilterInputRune: s.filterInput,
+	})
+	if err != nil {
+		return err
 	}
-	s.readLine, _ = interactive.NewEx(cfg)
 	defer func(rl *interactive.Interactive) {
 		if rl != nil {
 			err := rl.Close()
@@ -41,14 +45,15 @@ func (s *Search) Do(query string) error {
 			}
 		}
 	}(s.readLine)
-	s.showHostsTable(query)
+	s.search(query)
 
 	selectedNo, password := s.searchLoop()
 
-	err := s.readLine.Close()
+	err = s.readLine.Close()
 	if err != nil {
-		println(err.Error())
+		return err
 	}
+	s.readLine = nil
 
 	if selectedNo >= 0 {
 		host := s.showingHostsList[selectedNo]
@@ -106,47 +111,25 @@ func (s *Search) searchLoop() (selectedNo int, password string) {
 		}
 
 		line = strings.TrimSpace(line)
-		switch {
-		case line == "add":
+		if line == "add" {
 			Add()
-			s.showHostsTable(s.lastSearchKeyWord)
-		case strings.HasPrefix(line, "mod"):
-			line = strings.TrimSpace(line[3:])
-			if !(len(line) >= 1 && regexp.MustCompile("[0-9]").Match([]byte(line))) {
-				println("don't fond the number: " + line)
-				continue
-			}
-			sn, _ := strconv.Atoi(line)
-			if len(s.showingHostsList)-1 < sn {
-				continue
-			}
-			Modify(s.showingHostsList[sn].Position)
-			s.showHostsTable(s.lastSearchKeyWord)
-		case strings.HasPrefix(line, "del"):
-			line = strings.TrimSpace(line[3:])
-			if !(len(line) >= 1 && regexp.MustCompile("[0-9]").Match([]byte(line))) {
-				println("don't fond the number: " + line)
-				continue
-			}
-			sn, _ := strconv.Atoi(line)
-			if len(s.showingHostsList)-1 < sn {
-				continue
-			}
-			connector.SshhData().Delete(s.showingHostsList[sn].Position)
-			s.showHostsTable(s.lastSearchKeyWord)
+			s.search(s.lastSearchKeyWord)
 			continue
-		case line == "exit":
+		} else if line == "exit" {
 			os.Exit(0)
-		case strings.HasPrefix(line, "#") && len(line) >= 2 && regexp.MustCompile("[0-9]").Match([]byte(line[1:])):
-			selectedNo, _ = strconv.Atoi(line[1:])
-			if len(s.showingHostsList)-1 < selectedNo {
-				continue
-			}
-			host := s.showingHostsList[selectedNo]
+		} else if ok, con := s.checkCommand(line, "mod "); ok {
+			Modify(con.Position)
+			s.search(s.lastSearchKeyWord)
+			continue
+		} else if ok, con := s.checkCommand(line, "del "); ok {
+			connector.SshhData().Delete(con.Position)
+			s.search(s.lastSearchKeyWord)
+			continue
+		} else if ok, con := s.checkCommand(line, "#"); ok {
 			key := ""
-			if len(host.Password) <= 0 {
+			if len(con.Password) <= 0 {
 				println("No password has been set for this host")
-				host.Password, key = s.readLine.Password("Password:", false)
+				con.Password, key = s.readLine.Password("Password:", false)
 				//host.Key = Question("SSHKey:", true, host.Key)
 				connector.SshhData().Save()
 			}
@@ -154,24 +137,42 @@ func (s *Search) searchLoop() (selectedNo int, password string) {
 			if key == "" {
 				key = s.readLine.PasswordQuestion("Enter secret key", true, 16)
 			}
-			pw, err := encrypt.Decrypt(host.Password, key)
+			pw, err := encrypt.Decrypt(con.Password, key)
 			if err != nil {
 				println(err.Error())
 				continue
 			}
 			password = string(pw)
 			return
-
-		default:
+		} else if !strings.HasPrefix(line, "mod ") && !strings.HasPrefix(line, "del ") && !strings.HasPrefix(line, "#") {
 			s.lastSearchKeyWord = line
-			s.showHostsTable(line)
+			s.search(line)
+			continue
 		}
 	}
 
 	return
 }
 
-func (s *Search) showHostsTable(keyword string) {
+func (s *Search) checkCommand(line string, command string) (bool, *connector.Connector) {
+	if !strings.HasPrefix(line, command) {
+		return false, nil
+	}
+
+	line = strings.TrimSpace(line[len(command):])
+	if !(len(line) >= 1 && regexp.MustCompile("[0-9]").Match([]byte(line))) {
+		println("don't fond the number: " + line)
+		return false, nil
+	}
+	sn, _ := strconv.Atoi(line)
+	if len(s.showingHostsList)-1 < sn {
+		return false, nil
+	}
+
+	return true, s.showingHostsList[sn]
+}
+
+func (s *Search) search(keyword string) {
 	s.find(keyword)
 	s.resetPositionList()
 	s.readLine.PrintTable(s.showingHostsList)
