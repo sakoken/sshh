@@ -1,11 +1,13 @@
 package action
 
 import (
+	"strings"
+
 	"github.com/chzyer/readline"
+	"github.com/sakoken/sshh/config"
 	"github.com/sakoken/sshh/connector"
 	"github.com/sakoken/sshh/encrypt"
 	"github.com/sakoken/sshh/interactive"
-	"strings"
 )
 
 func CreateAndConnection(requestHost string, pOption string, port string) error {
@@ -37,14 +39,15 @@ func CreateAndConnection(requestHost string, pOption string, port string) error 
 	}(i)
 
 	//すでに登録済みの場合はすぐにssh
-	if has, resistedHost := connector.SshhData().Has(host); has {
+	if has, resistedHost := config.SshhData().Has(host); has {
 		key := i.PasswordQuestion("Enter secret key", true, 16)
 		i.Close()
 		pw, err := encrypt.Decrypt(resistedHost.Password, key)
 		if err != nil {
 			return err
 		}
-		connector.SshhData().SetTopPosition(resistedHost).Save()
+		config.SshhData().ToTopPosition(resistedHost)
+		config.SshhData().Save()
 		resistedHost.SshConnection(string(pw))
 		return nil
 	}
@@ -53,13 +56,15 @@ func CreateAndConnection(requestHost string, pOption string, port string) error 
 	host.Password, key = i.Password("Password:", true)
 	i.Close()
 
-	connector.SshhData().Add(host).Save()
+	config.SshhData().Add(host)
+	config.SshhData().Save()
 
 	pw, err := encrypt.Decrypt(host.Password, key)
 	if err != nil {
 		return err
 	}
-	connector.SshhData().SetTopPosition(host).Save()
+	config.SshhData().ToTopPosition(host)
+	config.SshhData().Save()
 	host.SshConnection(string(pw))
 	return nil
 }

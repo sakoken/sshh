@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/sakoken/sshh/action"
-	"github.com/sakoken/sshh/config"
-	"github.com/sakoken/sshh/connector"
+	"github.com/sakoken/sshh/controller"
 	"gopkg.in/urfave/cli.v2"
 	"log"
 	"os"
+
+	"github.com/sakoken/sshh/action"
+	"github.com/sakoken/sshh/config"
 )
 
 func main() {
@@ -19,8 +20,8 @@ func main() {
 		if c.Args().First() != "" {
 			return action.CreateAndConnection(c.Args().Get(0), c.Args().Get(1), c.Args().Get(2))
 		}
-		search := action.NewSearch()
-		return search.Do(c.String("query"))
+		ctrl := controller.NewController()
+		return ctrl.Do(c.String("query"))
 	}
 	app.Usage = `https://github.com/sakoken/sshh/blob/master/README.md
 	 [After exec sshh]
@@ -58,5 +59,5 @@ func initSshh() {
 		log.Fatal(err)
 	}
 	config.CreateJson(config.SshhJson())
-	connector.SshhData()
+	config.SshhData()
 }

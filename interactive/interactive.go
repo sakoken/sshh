@@ -2,13 +2,12 @@ package interactive
 
 import (
 	"fmt"
-	"github.com/chzyer/readline"
-	"github.com/sakoken/sshh/connector"
-	"github.com/sakoken/sshh/encrypt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
+
+	"github.com/chzyer/readline"
+	"github.com/sakoken/sshh/encrypt"
 )
 
 type Interactive struct {
@@ -119,46 +118,4 @@ func (i *Interactive) Question(q string, required bool, def string) string {
 		break
 	}
 	return result
-}
-
-func (i *Interactive) PrintTable(hosts []*connector.Connector) {
-	hostLen, portLen, userLen := i.MaxLength(hosts, 4)
-
-	hostStr := "Host"
-	portStr := "Port"
-	userStr := "User"
-
-	hostStr = hostStr + strings.Repeat(" ", hostLen-len(hostStr))
-	portStr = portStr + strings.Repeat(" ", portLen-len(portStr))
-	userStr = userStr + strings.Repeat(" ", userLen-len(userStr))
-
-	lenOfNo := len(strconv.Itoa(len(hosts)))
-	noSpace := strings.Repeat(" ", lenOfNo-1)
-	println(fmt.Sprintf("[#]"+noSpace+" %s  %s  %s  %s", hostStr, userStr, portStr, "Explanation"))
-	noStr := "[%d]"
-	for k, v := range hosts {
-		noSpace = strings.Repeat(" ", lenOfNo-len(strconv.Itoa(k)))
-		host := v.Host + strings.Repeat(" ", hostLen-len(v.Host))
-		port := v.Port + strings.Repeat(" ", portLen-len(v.Port))
-		user := v.User + strings.Repeat(" ", userLen-len(v.User))
-		println(fmt.Sprintf(noStr+noSpace+" %s  %s  %s  %s", k, host, user, port, v.Explanation))
-	}
-}
-
-func (i *Interactive) MaxLength(hosts []*connector.Connector, def int) (hostLen, portLen, userLen int) {
-	hostLen = def
-	portLen = def
-	userLen = def
-	for _, v := range hosts {
-		if len(v.Host) > hostLen {
-			hostLen = len(v.Host)
-		}
-		if len(v.Port) > portLen {
-			portLen = len(v.Port)
-		}
-		if len(v.User) > userLen {
-			userLen = len(v.User)
-		}
-	}
-	return
 }

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -26,4 +27,16 @@ func ReadJson(filePath string, v interface{}) {
 		log.Fatal(err)
 	}
 	json.Unmarshal(dat, v)
+}
+
+func WriteJson(filePath string, v interface{}) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	var buf bytes.Buffer
+	if err = json.Indent(&buf, []byte(b), "", "  "); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filePath, buf.Bytes(), 0777)
 }
