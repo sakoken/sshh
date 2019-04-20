@@ -49,8 +49,8 @@ func (h Connector) SshCommand() string {
 }
 
 func (h Connector) SshConnection(password string) {
-	println(fmt.Sprintf("\033[07m\033[34m%s\033[0m", h.SshCommand()))
-	println(fmt.Sprintf("\033[07m\033[34mExplanation: %s\033[0m", h.Explanation))
+	println(fmt.Sprintf("\033[07m\033[32m%s\033[0m", h.SshCommand()))
+	println(fmt.Sprintf("\033[07m\033[32mExplanation: %s\033[0m", h.Explanation))
 
 	var auth []ssh.AuthMethod
 	auth = append(auth, ssh.Password(password))

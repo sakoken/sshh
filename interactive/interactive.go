@@ -42,11 +42,11 @@ func (i *Interactive) PreparePrompt(q string) {
 
 func (i *Interactive) Password(q string, required bool) ([]byte, string) {
 	i.PreparePrompt(q)
-	result := i.PasswordQuestion("Enter password", required, 1000)
+	result := i.PasswordQuestion("Enter password", required)
 	if len(result) == 0 {
 		return []byte{}, ""
 	}
-	secretKey := i.PasswordQuestion("Enter secret key for encrypt", true, 16)
+	secretKey := i.PasswordQuestion("Enter secret key for encrypt", true)
 
 	pswd, err := encrypt.Encrypt([]byte(result), secretKey)
 	if err != nil {
@@ -66,7 +66,7 @@ func FilterInput(r rune) (rune, bool) {
 	return r, true
 }
 
-func (i *Interactive) PasswordQuestion(msg string, required bool, maxLength int) (result string) {
+func (i *Interactive) PasswordQuestion(msg string, required bool) (result string) {
 	cfg := i.GenPasswordConfig()
 	cfg.SetListener(func(line []rune, pos int, key rune) (newLine []rune, newPos int, ok bool) {
 		i.PreparePrompt(fmt.Sprintf(msg+"(%v)", len(line)))
@@ -85,11 +85,8 @@ func (i *Interactive) PasswordQuestion(msg string, required bool, maxLength int)
 		return
 	}
 	result = strings.TrimSpace(string(pw))
-	if len(result) >= maxLength && required {
-		if len(result) >= maxLength {
-			fmt.Printf("Please enter less then %d\n", maxLength)
-		}
-		result = i.PasswordQuestion(msg, required, maxLength)
+	if result == "" && required {
+		result = i.PasswordQuestion(msg, required)
 	}
 	return
 }

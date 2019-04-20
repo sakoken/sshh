@@ -48,7 +48,7 @@ func (s *Controller) Do(query string) error {
 	}(s.readLine)
 	s.search(query)
 
-	selectedNo, password := s.loop()
+	con, password := s.loop()
 
 	err = s.readLine.Close()
 	if err != nil {
@@ -56,19 +56,17 @@ func (s *Controller) Do(query string) error {
 	}
 	s.readLine = nil
 
-	if selectedNo >= 0 {
-		host := s.showingCollection.Index(selectedNo)
-		config.SshhData().ToTopPosition(host)
+	if con != nil && password != "" {
+		config.SshhData().ToTopPosition(con)
 		config.SshhData().Save()
-		host.SshConnection(password)
+		con.SshConnection(password)
 	}
 
 	return nil
 }
 
-func (s *Controller) loop() (selectedNo int, password string) {
+func (s *Controller) loop() (con *connector.Connector, password string) {
 	for {
-		selectedNo = -1
 		password = ""
 
 		line, err := s.readLine.Readline()
@@ -82,6 +80,7 @@ func (s *Controller) loop() (selectedNo int, password string) {
 			break
 		}
 
+		ok := false
 		line = strings.TrimSpace(line)
 		if line == "add" {
 			action.Add()
@@ -89,25 +88,25 @@ func (s *Controller) loop() (selectedNo int, password string) {
 			continue
 		} else if line == "exit" {
 			os.Exit(0)
-		} else if ok, con := s.checkCommand(line, "mod "); ok {
+		} else if ok, con = s.checkCommand(line, "mod "); ok {
 			action.Modify(con.Position)
 			s.search(s.lastSearchKeyWord)
 			continue
-		} else if ok, con := s.checkCommand(line, "del "); ok {
+		} else if ok, con = s.checkCommand(line, "del "); ok {
 			action.Delete(con.Position)
 			s.search(s.lastSearchKeyWord)
 			continue
-		} else if ok, con := s.checkCommand(line, "#"); ok {
+		} else if ok, con = s.checkCommand(line, "#"); ok {
 			key := ""
 			if len(con.Password) <= 0 {
 				println("No password has been set for this host")
-				con.Password, key = s.readLine.Password("Password:", false)
+				con.Password, key = s.readLine.Password("Password", false)
 				//host.Key = Question("SSHKey:", true, host.Key)
 				config.SshhData().Save()
 			}
 
 			if key == "" {
-				key = s.readLine.PasswordQuestion("Enter secret key", true, 16)
+				key = s.readLine.PasswordQuestion("Enter secret key", true)
 			}
 			pw, err := encrypt.Decrypt(con.Password, key)
 			if err != nil {

@@ -40,7 +40,7 @@ func CreateAndConnection(requestHost string, pOption string, port string) error 
 
 	//すでに登録済みの場合はすぐにssh
 	if has, resistedHost := config.SshhData().Has(host); has {
-		key := i.PasswordQuestion("Enter secret key", true, 16)
+		key := i.PasswordQuestion("Enter secret key", true)
 		i.Close()
 		pw, err := encrypt.Decrypt(resistedHost.Password, key)
 		if err != nil {
