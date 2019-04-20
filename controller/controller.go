@@ -106,7 +106,7 @@ func (s *Controller) loop() (con *connector.Connector, password string) {
 			}
 
 			if key == "" {
-				key = s.readLine.PasswordQuestion("Enter secret key", true)
+				key = s.readLine.PasswordQuestion("Enter secret phrase", true)
 			}
 			pw, err := encrypt.Decrypt(con.Password, key)
 			if err != nil {

@@ -46,7 +46,7 @@ func (i *Interactive) Password(q string, required bool) ([]byte, string) {
 	if len(result) == 0 {
 		return []byte{}, ""
 	}
-	secretKey := i.PasswordQuestion("Enter secret key for encrypt", true)
+	secretKey := i.PasswordQuestion("Enter secret phrase for encrypt", true)
 
 	pswd, err := encrypt.Encrypt([]byte(result), secretKey)
 	if err != nil {
