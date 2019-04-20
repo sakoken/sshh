@@ -24,7 +24,7 @@ func Add() error {
 		println("\033[31mAlready exists\033[00m")
 		return nil
 	}
-	host.Password, _ = i.Password("Password", false)
+	host.Password, _ = i.ServerPassword(false)
 	//host.Key = Question("SSHKey:", true, host.Key)
 	host.Explanation = i.Question("Explanation", false, "")
 	config.SshhData().Add(host)

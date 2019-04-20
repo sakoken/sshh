@@ -100,7 +100,7 @@ func (s *Controller) loop() (con *connector.Connector, password string) {
 			key := ""
 			if len(con.Password) <= 0 {
 				println("No password has been set for this host")
-				con.Password, key = s.readLine.Password("Password", false)
+				con.Password, key = s.readLine.ServerPassword(false)
 				//host.Key = Question("SSHKey:", true, host.Key)
 				config.SshhData().Save()
 			}

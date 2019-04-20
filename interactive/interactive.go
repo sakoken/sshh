@@ -40,9 +40,8 @@ func (i *Interactive) PreparePrompt(q string) {
 	i.SetPrompt("\033[36m" + q + "»\033[0m ")
 }
 
-func (i *Interactive) Password(q string, required bool) ([]byte, string) {
-	i.PreparePrompt(q)
-	result := i.PasswordQuestion("Enter password", required)
+func (i *Interactive) ServerPassword(required bool) ([]byte, string) {
+	result := i.PasswordQuestion("Enter server password", required)
 	if len(result) == 0 {
 		return []byte{}, ""
 	}

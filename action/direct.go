@@ -53,7 +53,7 @@ func Direct(requestHost string, pOption string, port string) error {
 	}
 
 	key := ""
-	host.Password, key = i.Password("Password", true)
+	host.Password, key = i.ServerPassword(true)
 	i.Close()
 
 	config.SshhData().Add(host)

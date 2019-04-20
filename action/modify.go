@@ -26,7 +26,7 @@ func Modify(position int) error {
 		return nil
 	}
 
-	pswd, _ := i.Password("Password", false)
+	pswd, _ := i.ServerPassword(false)
 	if len(pswd) > 0 {
 		host.Password = pswd
 	}
