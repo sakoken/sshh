@@ -69,7 +69,7 @@ func FilterInput(r rune) (rune, bool) {
 func (i *Interactive) PasswordQuestion(msg string, required bool, maxLength int) (result string) {
 	cfg := i.GenPasswordConfig()
 	cfg.SetListener(func(line []rune, pos int, key rune) (newLine []rune, newPos int, ok bool) {
-		i.PreparePrompt(fmt.Sprintf(msg+"(%v) ", len(line)))
+		i.PreparePrompt(fmt.Sprintf(msg+"(%v)", len(line)))
 		i.Refresh()
 		return nil, 0, false
 	})
@@ -92,6 +92,11 @@ func (i *Interactive) PasswordQuestion(msg string, required bool, maxLength int)
 		result = i.PasswordQuestion(msg, required, maxLength)
 	}
 	return
+}
+
+func (i *Interactive) YesNo(q string) bool {
+	res := i.Question(q, true, "")
+	return "yes" == res || "Yes" == res || "y" == res || "Y" == res || "YES" == res
 }
 
 func (i *Interactive) Question(q string, required bool, def string) string {

@@ -30,7 +30,7 @@ func (h *Connector) Equals(host *Connector) bool {
 		h.Port == host.Port
 }
 
-func (h Connector) SshCommand() string {
+func (h Connector) CommandBase() string {
 	user := ""
 	port := ""
 
@@ -41,7 +41,11 @@ func (h Connector) SshCommand() string {
 	if h.Port != "" {
 		port = "-p " + h.Port
 	}
-	return fmt.Sprintf("ssh %s%s %s", user, h.Host, port)
+	return fmt.Sprintf("%s%s %s", user, h.Host, port)
+}
+
+func (h Connector) SshCommand() string {
+	return fmt.Sprintf("ssh %s", h.CommandBase())
 }
 
 func (h Connector) SshConnection(password string) {
