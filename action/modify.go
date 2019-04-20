@@ -8,7 +8,6 @@ import (
 
 func Modify(position int) error {
 	i, _ := interactive.NewEx(&readline.Config{
-		Prompt:              "\033[36msshh-mod»\033[0m ",
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
 		FuncFilterInputRune: interactive.FilterInput,
@@ -18,21 +17,21 @@ func Modify(position int) error {
 
 	var host = config.SshhData().Connectors[position]
 	host = host.Clone()
-	host.Host = i.Question("HostName:", true, host.Host)
-	host.User = i.Question("UserName:", false, host.User)
-	host.Port = i.Question("PortNumber:", true, host.Port)
+	host.Host = i.Question("HostName", true, host.Host)
+	host.User = i.Question("UserName", false, host.User)
+	host.Port = i.Question("PortNumber", true, host.Port)
 
 	if has, hasHost := config.SshhData().Has(host); has && host.Position != hasHost.Position {
 		println("\033[31mAlready exists\033[00m")
 		return nil
 	}
 
-	pswd, _ := i.Password("Password:", false)
+	pswd, _ := i.Password("Password", false)
 	if len(pswd) > 0 {
 		host.Password = pswd
 	}
 	//host.Key = Question("SSHKey:", true, host.Key)
-	host.Explanation = i.Question("Explanation:", false, host.Explanation)
+	host.Explanation = i.Question("Explanation", false, host.Explanation)
 	config.SshhData().Connectors[position] = host
 	return config.SshhData().Save()
 }

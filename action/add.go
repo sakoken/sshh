@@ -9,7 +9,6 @@ import (
 
 func Add() error {
 	i, _ := interactive.NewEx(&readline.Config{
-		Prompt:              "\033[36msshh-add»\033[0m ",
 		InterruptPrompt:     "\n",
 		EOFPrompt:           "exit",
 		FuncFilterInputRune: interactive.FilterInput,
@@ -18,16 +17,16 @@ func Add() error {
 	defer i.Close()
 
 	host := &connector.Connector{}
-	host.Host = i.Question("HostName:", true, "")
-	host.User = i.Question("UserName:", false, "")
-	host.Port = i.Question("Port:", true, "22")
+	host.Host = i.Question("HostName", true, "")
+	host.User = i.Question("UserName", false, "")
+	host.Port = i.Question("Port", true, "22")
 	if has, _ := config.SshhData().Has(host); has {
 		println("\033[31mAlready exists\033[00m")
 		return nil
 	}
-	host.Password, _ = i.Password("Password:", false)
+	host.Password, _ = i.Password("Password", false)
 	//host.Key = Question("SSHKey:", true, host.Key)
-	host.Explanation = i.Question("Explanation:", false, "")
+	host.Explanation = i.Question("Explanation", false, "")
 	config.SshhData().Add(host)
 	return config.SshhData().Save()
 }

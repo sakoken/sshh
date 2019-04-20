@@ -36,9 +36,12 @@ func NewEx(cfg *readline.Config) (*Interactive, error) {
 	return i, nil
 }
 
-func (i *Interactive) Password(q string, required bool) ([]byte, string) {
-	fmt.Println(q)
+func (i *Interactive) PreparePrompt(q string) {
+	i.SetPrompt("\033[36m" + q + "»\033[0m ")
+}
 
+func (i *Interactive) Password(q string, required bool) ([]byte, string) {
+	i.PreparePrompt(q)
 	result := i.PasswordQuestion("Enter password", required, 1000)
 	if len(result) == 0 {
 		return []byte{}, ""
@@ -66,7 +69,7 @@ func FilterInput(r rune) (rune, bool) {
 func (i *Interactive) PasswordQuestion(msg string, required bool, maxLength int) (result string) {
 	cfg := i.GenPasswordConfig()
 	cfg.SetListener(func(line []rune, pos int, key rune) (newLine []rune, newPos int, ok bool) {
-		i.SetPrompt(fmt.Sprintf(msg+"(%v): ", len(line)))
+		i.PreparePrompt(fmt.Sprintf(msg+"(%v) ", len(line)))
 		i.Refresh()
 		return nil, 0, false
 	})
@@ -92,9 +95,8 @@ func (i *Interactive) PasswordQuestion(msg string, required bool, maxLength int)
 }
 
 func (i *Interactive) Question(q string, required bool, def string) string {
-	fmt.Println(q)
 	result := def
-
+	i.PreparePrompt(q)
 	var err error
 	for {
 		result, err = i.ReadlineWithDefault(def)
