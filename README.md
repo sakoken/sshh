@@ -41,7 +41,12 @@ Modify a host
 #### `sshh>> del [positionNo]`
 Delete a host
 
+----
 
+# License
+MIT
 
+# Author
+Kenji Sakoda
 
 
