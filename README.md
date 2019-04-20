@@ -8,7 +8,9 @@ You can ssh with your own secret phrase (server passwordless)<br>
 
 ## Install
 #### mac
+```
 brew install sakoken/sshh/sshh
+```
 
 #### other
 Download from here https://github.com/sakoken/sshh/releases
