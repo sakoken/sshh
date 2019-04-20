@@ -44,13 +44,8 @@ func (h Connector) CommandBase() string {
 	return fmt.Sprintf("%s%s %s", user, h.Host, port)
 }
 
-func (h Connector) SshCommand() string {
-	return fmt.Sprintf("ssh %s", h.CommandBase())
-}
-
 func (h Connector) SshConnection(password string) {
-	println(fmt.Sprintf("\033[07m\033[32m%s\033[0m", "Try ssh..."))
-	println(fmt.Sprintf("\033[07m\033[32m%s\033[0m", h.SshCommand()))
+	println(fmt.Sprintf("\033[07m\033[32mTry ssh to %s\033[0m", h.CommandBase()))
 	println(fmt.Sprintf("\033[07m\033[32m%s\033[0m", h.Explanation))
 
 	var auth []ssh.AuthMethod
