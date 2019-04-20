@@ -10,7 +10,7 @@ import (
 	"github.com/sakoken/sshh/interactive"
 )
 
-func CreateAndConnection(requestHost string, pOption string, port string) error {
+func Direct(requestHost string, pOption string, port string) error {
 	host := &connector.Connector{}
 	host.Host = requestHost
 	host.Port = "22"
@@ -53,7 +53,7 @@ func CreateAndConnection(requestHost string, pOption string, port string) error 
 	}
 
 	key := ""
-	host.Password, key = i.Password("Password:", true)
+	host.Password, key = i.Password("Password", true)
 	i.Close()
 
 	config.SshhData().Add(host)

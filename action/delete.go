@@ -17,7 +17,7 @@ func Delete(position int) {
 	defer i.Close()
 
 	con := config.SshhData().Connectors[position]
-	if !i.YesNo(fmt.Sprintf("Really you want delete [%s] y/n", con.CommandBase())) {
+	if !i.Confirm(fmt.Sprintf("Really you want delete [%s] y/n", con.CommandBase())) {
 		return
 	}
 

@@ -91,7 +91,7 @@ func (i *Interactive) PasswordQuestion(msg string, required bool) (result string
 	return
 }
 
-func (i *Interactive) YesNo(q string) bool {
+func (i *Interactive) Confirm(q string) bool {
 	res := i.Question(q, true, "")
 	return "yes" == res || "Yes" == res || "y" == res || "Y" == res || "YES" == res
 }

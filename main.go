@@ -18,7 +18,7 @@ func main() {
 	app.Before = before()
 	app.Action = func(c *cli.Context) error {
 		if c.Args().First() != "" {
-			return action.CreateAndConnection(c.Args().Get(0), c.Args().Get(1), c.Args().Get(2))
+			return action.Direct(c.Args().Get(0), c.Args().Get(1), c.Args().Get(2))
 		}
 		ctrl := controller.NewController()
 		return ctrl.Do(c.String("query"))
