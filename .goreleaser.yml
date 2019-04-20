@@ -12,13 +12,23 @@ builds:
   goarch:
   - amd64
   - 386
-checksum:
-  name_template: 'checksums.txt'
-snapshot:
-  name_template: "{{ .Tag }}-next"
-changelog:
-  sort: asc
-  filters:
-    exclude:
-    - '^docs:'
-    - '^test:'
+archive:
+  replacements:
+    amd64: 64-bit
+    386: 32-bit
+    darwin: macOS
+  format: zip
+  format_overrides:
+  - goos: windows
+    format: zip
+brew:
+  github:
+    owner: sakoken
+    name: homebrew-sshh
+  commit_author:
+    name: goreleaserbot
+    email: goreleaser@carlosbecker.com
+  description: "ssh hosts manager"
+  homepage: "https://github.com/sakoken/sshh"
+  install: |
+    bin.install "sshh"
