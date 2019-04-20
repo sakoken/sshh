@@ -7,6 +7,10 @@ You can ssh with your own secret phrase (server passwordless)<br>
 ![sshh](https://res.cloudinary.com/dwarv2f81/image/upload/v1554915394/sshh/sshh_movie.gif)
 
 ## Install
+#### mac
+brew install sakoken/sshh/sshh
+
+#### other
 Download from here https://github.com/sakoken/sshh/releases
 
 ## Usage
