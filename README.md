@@ -1,8 +1,9 @@
-# sshh : ssh host's manager
+# sshh : ssh hosts manager
 
 [![GitHub release](https://img.shields.io/github/release/sakoken/sshh.svg)](https://github.com/sakoken/sshh/releases/latest)
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/sakoken/sshh/blob/master/LICENSE)
-
+<br>
+sshh is a management application of ssh's host<br>
 ![sshh](https://res.cloudinary.com/dwarv2f81/image/upload/v1554915394/sshh/sshh_movie.gif)
 
 ## Install
