@@ -11,6 +11,7 @@ var once sync.Once
 
 func SshhData() *Sshh {
 	once.Do(func() {
+		sshhData = &Sshh{&connector.ConnectorCollection{}}
 		ReadJson(SshhJson(), &sshhData)
 		sshhData.ResetPosition()
 	})
